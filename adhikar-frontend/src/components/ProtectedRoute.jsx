@@ -20,6 +20,11 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
+  const isProfileComplete = user.isProfileComplete || ((user.fullName || (user.firstName && user.lastName)) && user.state && user.district && user.blockOrMunicipality);
+  if (!isProfileComplete) {
+    return <Navigate to="/login?step=2" replace />;
+  }
+
   return children;
 };
 

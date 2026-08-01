@@ -19,12 +19,12 @@ const UserSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    required: [true, 'Please add gender details'],
     enum: ['Male', 'Female', 'Other'],
+    default: 'Other',
   },
   dob: {
     type: Date,
-    required: [true, 'Please add date of birth'],
+    default: null,
   },
   state: {
     type: String,
@@ -33,6 +33,39 @@ const UserSchema = new mongoose.Schema({
   district: {
     type: String,
     required: [true, 'Please add district location'],
+  },
+  blockOrMunicipality: {
+    type: String,
+    required: [true, 'Please add block or municipality location'],
+  },
+  idType: {
+    type: String,
+    enum: ['Aadhaar', 'PAN', 'VoterID'],
+    default: 'Aadhaar'
+  },
+  country: {
+    type: String,
+    default: 'India',
+  },
+  profileImage: {
+    type: String,
+    default: '',
+  },
+  address: {
+    type: String,
+    default: ''
+  },
+  aadhaarHash: {
+    type: String,
+    select: false
+  },
+  aadhaarVerified: {
+    type: Boolean,
+    default: false
+  },
+  isProfileComplete: {
+    type: Boolean,
+    default: true
   },
   createdAt: {
     type: Date,

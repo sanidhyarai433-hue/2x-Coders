@@ -1,0 +1,123 @@
+{
+  "Maharashtra": [
+    "Mumbai",
+    "Pune",
+    "Nagpur",
+    "Thane",
+    "Nashik",
+    "Aurangabad",
+    "Amravati"
+  ],
+  "Delhi": [
+    "New Delhi",
+    "North Delhi",
+    "South Delhi",
+    "West Delhi",
+    "East Delhi"
+  ],
+  "Karnataka": [
+    "Bengaluru Rural",
+    "Bengaluru Urban",
+    "Mysuru",
+    "Hubballi-Dharwad",
+    "Mangaluru",
+    "Belagavi"
+  ],
+  "Tamil Nadu": [
+    "Chennai",
+    "Coimbatore",
+    "Madurai",
+    "Tiruchirappalli",
+    "Salem",
+    "Tirunelveli"
+  ],
+  "Uttar Pradesh": [
+    "Lucknow",
+    "Kanpur Urban",
+    "Gautam Buddha Nagar (Noida)",
+    "Varanasi",
+    "Agra",
+    "Prayagraj",
+    "Ghaziabad"
+  ],
+  "West Bengal": [
+    "Kolkata",
+    "North 24 Parganas",
+    "South 24 Parganas",
+    "Howrah",
+    "Darjeeling",
+    "Siliguri"
+  ],
+  "Gujarat": [
+    "Ahmedabad",
+    "Surat",
+    "Vadodara",
+    "Rajkot",
+    "Gandhinagar",
+    "Bhavnagar"
+  ],
+  "Rajasthan": [
+    "Jaipur",
+    "Jodhpur",
+    "Udaipur",
+    "Kota",
+    "Bikaner",
+    "Ajmer"
+  ],
+  "Bihar": [
+    "Patna",
+    "Gaya",
+    "Muzaffarpur",
+    "Bhagalpur",
+    "Darbhanga",
+    "Nalanda"
+  ],
+  "Madhya Pradesh": [
+    "Indore",
+    "Bhopal",
+    "Jabalpur",
+    "Gwalior",
+    "Ujjain",
+    "Sagar"
+  ],
+  "Kerala": [
+    "Thiruvananthapuram",
+    "Kochi (Ernakulam)",
+    "Kozhikode",
+    "Thrissur",
+    "Kollam",
+    "Kannur"
+  ],
+  "Punjab": [
+    "Ludhiana",
+    "Amritsar",
+    "Jalandhar",
+    "Patiala",
+    "Bathinda",
+    "Mohali"
+  ],
+  "Haryana": [
+    "Gurugram",
+    "Faridabad",
+    "Panipat",
+    "Ambala",
+    "Karnal",
+    "Rohtak"
+  ],
+  "Andhra Pradesh": [
+    "Visakhapatnam",
+    "Vijayawada",
+    "Guntur",
+    "Nellore",
+    "Kurnool",
+    "Tirupati"
+  ],
+  "Telangana": [
+    "Hyderabad",
+    "Warangal",
+    "Nizamabad",
+    "Karimnagar",
+    "Khammam",
+    "Rangareddy"
+  ]
+}

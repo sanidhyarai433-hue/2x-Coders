@@ -20,7 +20,6 @@ const GrievanceSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['certificate', 'grievance', 'corruption', 'delay'],
     required: true,
   },
   urgency: {
@@ -31,6 +30,14 @@ const GrievanceSchema = new mongoose.Schema({
   department: {
     type: String,
     required: true,
+  },
+  portalName: {
+    type: String,
+    default: 'CPGRAMS National Portal',
+  },
+  redirectUrl: {
+    type: String,
+    default: 'https://pgportal.gov.in',
   },
   confidence: {
     type: Number,
@@ -46,7 +53,7 @@ const GrievanceSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Appeal Filed', 'Resolved'],
+    enum: ['Pending', 'Appeal Filed', 'Resolved', 'Overdue'],
     default: 'Pending',
   },
   formalLetter: {
@@ -64,6 +71,10 @@ const GrievanceSchema = new mongoose.Schema({
   appeal2Draft: {
     type: String,
     required: true,
+  },
+  deadlineDays: {
+    type: Number,
+    default: 30,
   },
   submittedAt: {
     type: Date,

@@ -5,6 +5,56 @@ import {
   Mic, MicOff, AlertCircle, FileText, Scale, Landmark, ShieldCheck, ArrowRight,
   Globe, Volume2
 } from 'lucide-react';
+const localPortalMap = {
+  "certificate/service delay": {
+    issueType: "Certificate / Service Delay",
+    category: "certificate/service delay",
+    department: "State Revenue & Public Service Department (Seva Sindhu)",
+    portalName: "Seva Sindhu",
+    redirectUrl: "https://sevasindhu.karnataka.gov.in",
+    keywords: ["certificate", "income certificate", "caste certificate", "birth certificate", "death certificate", "revenue office", "ration card", "service delay", "edistrict", "nada kacheri", "tahsildar", "delay", "service delivery"]
+  },
+  "electricity": {
+    issueType: "Electricity & Power",
+    category: "electricity",
+    department: "Ministry of Power / BESCOM DISCOM",
+    portalName: "BESCOM",
+    redirectUrl: "https://bescom.karnataka.gov.in",
+    keywords: ["electricity", "power cut", "power outage", "meter", "bescom", "mescom", "hescom", "cesc", "discom", "transformer", "voltage", "electric pole", "light bill", "current"]
+  },
+  "police": {
+    issueType: "Police / Crime / FIR",
+    category: "police",
+    department: "State Police Department / Home Affairs",
+    portalName: "Police portal",
+    redirectUrl: "https://ksp.karnataka.gov.in",
+    keywords: ["police", "fir", "theft", "stolen", "crime", "robbery", "cybercrime", "harassment", "assault", "police station", "inspector", "bribe", "traffic fine", "cheating"]
+  },
+  "RTI": {
+    issueType: "Right to Information (RTI)",
+    category: "RTI",
+    department: "RTI Online Cell / Respective Public Authority",
+    portalName: "RTI portal",
+    redirectUrl: "https://rtionline.gov.in",
+    keywords: ["rti", "right to information", "section 6", "public information officer", "pio", "information sought", "cpc", "cic", "inspection of records"]
+  },
+  "consumer": {
+    issueType: "Consumer Rights & Fraud",
+    category: "consumer",
+    department: "Ministry of Consumer Affairs, Food and Public Distribution",
+    portalName: "Consumer portal",
+    redirectUrl: "https://edaakhil.nic.in",
+    keywords: ["consumer", "defective", "warranty", "refund", "overcharging", "mrp", "merchant", "fraud", "e-commerce", "online store", "bill dispute", "false advertising"]
+  },
+  "general grievance": {
+    issueType: "General Grievance / Municipal / Utilities",
+    category: "general grievance",
+    department: "Department of Administrative Reforms / Municipal Corporation",
+    portalName: "Janaspandana",
+    redirectUrl: "https://janaspandana.karnataka.gov.in",
+    keywords: ["water", "sewage", "gutter", "pothole", "road", "garbage", "drainage", "municipality", "bbmp", "street light", "janaspandana"]
+  }
+};
 
 const FilingWizard = () => {
   const { token } = useAuth();
@@ -109,44 +159,60 @@ const FilingWizard = () => {
       const data = await response.json();
       if (data.success) {
         setStructuredPreview(data.data);
+        if (data.data) {
+          console.log("Portal identified:", data.data.portalName);
+        }
       }
     } catch (err) {
       console.warn('Backend server offline. Simulating AI analysis locally.');
-      // Local simulation for demo resilience
-      let ministry = 'Ministry of Public Grievances';
-      let legalReferences = [];
-      
-      if (category === 'Water & Sanitation') {
-        ministry = 'Ministry of Jal Shakti / Department of Drinking Water and Sanitation';
-        legalReferences = [
-          'Section 3 of the Water (Prevention and Control of Pollution) Act, 1974',
-          'Article 21 of the Constitution of India (Right to Clean Drinking Water)'
-        ];
-      } else if (category === 'Roads & Transport') {
-        ministry = 'Ministry of Road Transport and Highways';
-        legalReferences = [
-          'Section 198A of the Motor Vehicles (Amendment) Act, 2019',
-          'Law of Torts (Negligence of Public Utility authorities)'
-        ];
-      } else if (category === 'Electricity & Power') {
-        ministry = 'Ministry of Power';
-        legalReferences = [
-          'Section 43 of the Electricity Act, 2003 (Duty to supply on request)',
-          'Electricity Consumer Rights Rules, 2020'
-        ];
-      } else {
-        ministry = 'Ministry of Consumer Affairs, Food and Public Distribution';
-        legalReferences = ['Section 2(9) of the Consumer Protection Act, 2019'];
+      const textLower = description.toLowerCase();
+      let bestMatchKey = null;
+      let maxKeywordScore = 0;
+
+      for (const [key, mapping] of Object.entries(localPortalMap)) {
+        let score = 0;
+        for (const kw of mapping.keywords) {
+          if (textLower.includes(kw)) {
+            score += 1;
+          }
+        }
+        if (score > maxKeywordScore) {
+          maxKeywordScore = score;
+          bestMatchKey = key;
+        }
+      }
+
+      let matchedCategory = 'general grievance';
+      let ministry = 'Ministry of Personnel, Public Grievances and Pensions';
+      let portalName = 'CPGRAMS fallback';
+      let redirectUrl = 'https://pgportal.gov.in';
+      let legalReferences = ['Citizen Charter Guidelines'];
+
+      if (bestMatchKey && maxKeywordScore >= 2) {
+        const match = localPortalMap[bestMatchKey];
+        matchedCategory = match.category;
+        ministry = match.department;
+        portalName = match.portalName;
+        redirectUrl = match.redirectUrl;
+        
+        if (matchedCategory === 'certificate/service delay') legalReferences = ['Information Technology Act, 2000', 'State Right to Public Services Act'];
+        else if (matchedCategory === 'electricity') legalReferences = ['Section 43 of the Electricity Act, 2003', 'Electricity Rights of Consumers Rules 2020'];
+        else if (matchedCategory === 'police') legalReferences = ['Section 154 of the Code of Criminal Procedure (CrPC)', 'Police Act 1861'];
+        else if (matchedCategory === 'RTI') legalReferences = ['Section 6(1) of the Right to Information Act, 2005', 'Section 7(1) of the RTI Act 2005'];
+        else if (matchedCategory === 'consumer') legalReferences = ['Section 2(9) of the Consumer Protection Act, 2019', 'Essential Commodities Act 1955'];
+        else if (matchedCategory === 'general grievance') legalReferences = ['Section 3 of the Water Act 1974', 'Section 198A of the Motor Vehicles Act 2019'];
       }
 
       const mockResult = {
         _id: 'mock_grievance_' + Math.random().toString(36).substr(2, 9),
         title,
         description,
-        category,
+        category: matchedCategory,
         ministry,
         legalReferences,
         status: 'Ready to File',
+        portalName,
+        redirectUrl,
         copilotSteps: [
           {
             field: 'Grievance Description',
@@ -157,12 +223,13 @@ const FilingWizard = () => {
           {
             field: 'Department',
             value: ministry,
-            helpText: `Select ${ministry} in CPGRAMS.`,
+            helpText: `Select ${ministry} in ${portalName}.`,
             selector: '#department_dropdown'
           }
         ]
       };
       setStructuredPreview(mockResult);
+      // Auto-redirect removed per new requirement
     } finally {
       setSubmitting(false);
     }
@@ -336,12 +403,26 @@ const FilingWizard = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => navigate(`/copilot/${structuredPreview._id}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-sm font-bold text-slate-950 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 transition-all duration-300 shadow-lg"
-          >
-            Launch Copilot Assisted Filing <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 mt-6">
+            {structuredPreview.redirectUrl ? (
+              <button
+                onClick={() => window.open(structuredPreview.redirectUrl, '_blank')}
+                className="w-full sm:w-2/3 flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-sm font-bold text-slate-950 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 transition-all duration-300 shadow-lg"
+              >
+                Access {structuredPreview.portalName || 'External'} Link <Globe className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            ) : (
+              <div className="w-full sm:w-2/3 flex items-center justify-center px-4 py-4 rounded-xl text-xs font-bold text-slate-400 bg-slate-800 border border-slate-700 text-center">
+                No matching portal found. Please use the Copilot Assistant.
+              </div>
+            )}
+            <button
+              onClick={() => navigate(`/copilot/${structuredPreview._id}`)}
+              className="w-full sm:w-1/3 flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-sm font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all duration-300 shadow-lg border border-slate-700"
+            >
+              Launch Copilot <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>

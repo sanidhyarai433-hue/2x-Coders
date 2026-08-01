@@ -45,3 +45,22 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #ff9933;
 }
+
+@layer utilities {
+  .animate-page-enter {
+    animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-step-enter {
+    animation: fade-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-right {
+  0% { opacity: 0; transform: translateX(15px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
