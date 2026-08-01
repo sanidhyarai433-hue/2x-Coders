@@ -1,9 +1,10 @@
-const dotenv = require('dotenv');
+require("dotenv").config(); // ✅ MUST be FIRST
+
 const app = require('./app');
 const connectDB = require('./config/db');
 
-// Load env vars
-dotenv.config();
+// Debug (optional - remove later)
+console.log("ENV CHECK:", process.env.GROQ_API_KEY);
 
 // Connect to database
 connectDB();
@@ -17,7 +18,4 @@ const server = app.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`);
-  // Keep server running for demo purposes instead of crashing
 });
-
-// Trigger restart comment

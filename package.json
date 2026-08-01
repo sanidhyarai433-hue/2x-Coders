@@ -10,6 +10,7 @@
     "dev": "concurrently \"npm run dev --prefix adhikar-backend\" \"npm run dev --prefix adhikar-frontend\""
   },
   "dependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "groq-sdk": "^1.5.0"
   }
 }

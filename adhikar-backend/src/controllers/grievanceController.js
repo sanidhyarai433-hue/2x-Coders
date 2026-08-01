@@ -405,6 +405,10 @@ const draftAppeal = async (complaintText, ministry, legalReferences, daysLate, c
       messages: [
         { role: 'system', content: 'You are a legal advisor writing an official first appeal docket for an overdue government case. Output only the letter text.' },
         { role: 'user', content: prompt }
+      ],
+      model: 'llama-3.3-70b-versatile'
+    });
+
     return completion.choices[0].message.content.trim();
   } catch (err) {
     console.error('Groq Appeal Drafting Error:', err.message);

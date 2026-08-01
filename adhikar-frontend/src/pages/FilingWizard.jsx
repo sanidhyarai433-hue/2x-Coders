@@ -56,6 +56,11 @@ const FilingWizard = () => {
   );
   const [isRecording, setIsRecording] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [complaintInput, setComplaintInput] = useState(
+    'Tap water has been coming out yellow and smelling like gutter sewage for 15 days in Ward 4.'
+  );
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiResponse, setApiResponse] = useState('');
 
   // Step 3 / AI Analysis State
   const [analyzing, setAnalyzing] = useState(false);
@@ -118,6 +123,34 @@ const FilingWizard = () => {
     recognition.start();
     window.currentRecognition = recognition;
     setIsRecording(true);
+  };
+
+  const handleSendComplaintToApi = async () => {
+    if (!complaintInput.trim()) {
+      alert('Please enter a complaint first.');
+      return;
+    }
+
+    setApiLoading(true);
+    setApiResponse('');
+
+    try {
+      const response = await fetch(`${API_URL}/grievance/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: complaintInput.trim() })
+      });
+
+      const data = await response.json();
+      setApiResponse(data.result || 'No response received from the API.');
+    } catch (err) {
+      console.error('Error sending complaint to API:', err);
+      setApiResponse('Unable to reach the backend right now. Please try again.');
+    } finally {
+      setApiLoading(false);
+    }
   };
 
   // Trigger AI Analysis when moving to Step 3
@@ -580,6 +613,34 @@ const FilingWizard = () => {
                           className="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
                           placeholder="Describe the grievance in detail..."
                         ></textarea>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                        <label className="block text-xs font-bold text-slate-700">Quick API Test</label>
+                        <textarea
+                          rows="3"
+                          value={complaintInput}
+                          onChange={(e) => setComplaintInput(e.target.value)}
+                          className="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
+                          placeholder="Enter complaint text to test the backend API"
+                        ></textarea>
+
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleSendComplaintToApi}
+                            disabled={apiLoading}
+                            className="bg-[#1a4b8c] hover:bg-blue-800 text-white px-4 py-2 rounded font-semibold text-sm transition-all disabled:opacity-60"
+                          >
+                            {apiLoading ? 'Sending...' : 'Send to API'}
+                          </button>
+                        </div>
+
+                        {apiResponse && (
+                          <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700 whitespace-pre-wrap">
+                            {apiResponse}
+                          </div>
+                        )}
                       </div>
 
                       <div>
