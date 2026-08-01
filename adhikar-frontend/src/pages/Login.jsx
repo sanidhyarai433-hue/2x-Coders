@@ -512,7 +512,7 @@ const Login = () => {
                           value={phone}
                           onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').substring(0, 10))}
                           placeholder="Enter 10-digit number"
-                          className="block w-full pl-20 pr-3 py-3.5 bg-transparent rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none text-sm font-mono tracking-widest"
+                          className="block w-full pl-20 pr-3 py-3.5 bg-white text-black rounded-xl placeholder-slate-500 focus:outline-none text-sm font-mono tracking-widest"
                         />
                       </div>
                       <p className="text-[10px] text-slate-500 leading-tight">
@@ -570,7 +570,7 @@ const Login = () => {
                             value={digit}
                             onChange={(e) => handleOtpChange(idx, e.target.value)}
                             onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                            className="w-12 h-12 bg-slate-950 border border-slate-800 rounded-xl text-center text-lg font-black text-slate-100 focus:outline-none focus:border-saffron-500/70 transition-all font-mono shadow-inner"
+                            className="w-12 h-12 bg-white border border-slate-300 rounded-xl text-center text-lg font-black text-black focus:outline-none focus:border-saffron-500/70 transition-all font-mono shadow-inner"
                           />
                         ))}
                       </div>
@@ -675,7 +675,7 @@ const Login = () => {
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="E.g. Rajesh Kumar"
-                          className="block w-full pl-9 pr-3 py-2.5 bg-transparent rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none text-xs"
+                          className="block w-full pl-9 pr-3 py-2.5 bg-white text-black rounded-xl placeholder-slate-500 focus:outline-none text-xs"
                         />
                       </div>
                     </div>
@@ -726,7 +726,7 @@ const Login = () => {
                                   ? "ABCDE1234F" 
                                   : "ABC0000000"
                             }
-                            className="block w-full pl-9 pr-3 py-2.5 bg-transparent rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none text-xs font-mono tracking-widest disabled:text-ashoka-500"
+                            className="block w-full pl-9 pr-3 py-2.5 bg-white text-black rounded-xl placeholder-slate-500 focus:outline-none text-xs font-mono tracking-widest disabled:text-slate-500"
                           />
                         </div>
                         

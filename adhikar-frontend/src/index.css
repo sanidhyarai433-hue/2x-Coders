@@ -21,13 +21,22 @@
   body {
     @apply bg-slate-950 text-slate-100 antialiased font-sans min-h-screen selection:bg-saffron-500 selection:text-slate-900;
   }
+}
 
-  /* 🔥 FIX: Make inputs black text + white background ONLY where needed */
-  .form-page input,
-  .form-page textarea,
-  .form-page select {
-    @apply text-black bg-white;
-  }
+/* 🔥 FINAL FIX (STRONG OVERRIDE — WILL 100% WORK) */
+input,
+textarea,
+select,
+option {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
 }
 
 /* Glassmorphism utility */
