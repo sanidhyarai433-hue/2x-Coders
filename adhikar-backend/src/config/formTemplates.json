@@ -1,0 +1,64 @@
+{
+  "portals": [
+    {
+      "name": "CPGRAMS",
+      "fields": [
+        {
+          "label": "Complainant Name",
+          "source": "user.fullName",
+          "helpText": "Enter your full name in the registration section."
+        },
+        {
+          "label": "Mobile Number",
+          "source": "user.phone",
+          "helpText": "Verify this is your active 10-digit number for SMS notifications."
+        },
+        {
+          "label": "Ministry/Department",
+          "source": "case.department",
+          "helpText": "Select this department from the ministry dropdown tree."
+        },
+        {
+          "label": "Grievance Description",
+          "source": "case.formalLetter",
+          "helpText": "Paste the complete AI-structured formal complaint letter draft here."
+        },
+        {
+          "label": "State of Grievance",
+          "source": "user.state",
+          "helpText": "Select your state from the location parameters."
+        },
+        {
+          "label": "District of Grievance",
+          "source": "user.district",
+          "helpText": "Select your local district based on your state."
+        }
+      ]
+    },
+    {
+      "name": "RTI",
+      "fields": [
+        {
+          "label": "Applicant Name",
+          "source": "user.fullName",
+          "helpText": "Enter your legal name as it appears on your ID proof."
+        },
+        {
+          "label": "Public Authority Concerned",
+          "source": "case.department",
+          "helpText": "Choose this department from the public authority list."
+        },
+        {
+          "label": "Text of RTI Application",
+          "source": "case.rtiDraft",
+          "helpText": "Paste this structured Form A questionnaire into the description box."
+        },
+        {
+          "label": "Address Details",
+          "source": "user.address",
+          "helpText": "Paste your verified mailing address for receiving post responses."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Adhikar AI Copilot",
+  "version": "1.0",
+  "description": "Guides citizen grievances and RTI submissions on official portals with click-to-fill features.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://pgportal.gov.in/*",
+    "https://rtionline.gov.in/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://pgportal.gov.in/*",
+        "https://rtionline.gov.in/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  }
+}

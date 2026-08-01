@@ -1,0 +1,6 @@
+/* Adhikar AI Copilot Extension Overlay Styling */
+.adhikar-highlight {
+  border: 2px solid #FF9933 !important;
+  background-color: rgba(255, 153, 51, 0.05) !important;
+  box-shadow: 0 0 8px rgba(255, 153, 51, 0.2) !important;
+}

@@ -1,0 +1,15 @@
+{
+  "name": "adhikar-workspace",
+  "version": "1.0.0",
+  "description": "ADHIKAR — AI-Powered Citizen Grievance + RTI Assistant (SIH Workspace)",
+  "scripts": {
+    "install-all": "npm install --prefix adhikar-backend && npm install --prefix adhikar-frontend",
+    "dev-backend": "npm run dev --prefix adhikar-backend",
+    "dev-frontend": "npm run dev --prefix adhikar-frontend",
+    "start": "concurrently \"npm start --prefix adhikar-backend\" \"npm run dev --prefix adhikar-frontend\"",
+    "dev": "concurrently \"npm run dev --prefix adhikar-backend\" \"npm run dev --prefix adhikar-frontend\""
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
