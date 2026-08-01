@@ -21,6 +21,13 @@
   body {
     @apply bg-slate-950 text-slate-100 antialiased font-sans min-h-screen selection:bg-saffron-500 selection:text-slate-900;
   }
+
+  /* 🔥 FIX: Make inputs black text + white background ONLY where needed */
+  .form-page input,
+  .form-page textarea,
+  .form-page select {
+    @apply text-black bg-white;
+  }
 }
 
 /* Glassmorphism utility */

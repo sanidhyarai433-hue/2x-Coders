@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import FilingWizard from './pages/FilingWizard';
 import Splash from './pages/Splash';
+import FutureScopeDemo from './pages/FutureScopeDemo';
+import AdhikarSplitDemo from './pages/AdhikarSplitDemo';
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
             <Route path="/" element={<Splash />} />
 
             {/* Public Route */}
+            <Route path="/split-demo" element={<AdhikarSplitDemo />} />
+            <Route path="/future-scope" element={<FutureScopeDemo />} />
             <Route path="/login" element={<Login />} />
             <Route
               path="/dashboard"

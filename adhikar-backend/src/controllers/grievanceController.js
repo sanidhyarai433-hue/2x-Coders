@@ -405,10 +405,6 @@ const draftAppeal = async (complaintText, ministry, legalReferences, daysLate, c
       messages: [
         { role: 'system', content: 'You are a legal advisor writing an official first appeal docket for an overdue government case. Output only the letter text.' },
         { role: 'user', content: prompt }
-      ],
-      model: 'llama-3.3-70b-versatile'
-    });
-
     return completion.choices[0].message.content.trim();
   } catch (err) {
     console.error('Groq Appeal Drafting Error:', err.message);
@@ -416,6 +412,300 @@ const draftAppeal = async (complaintText, ministry, legalReferences, daysLate, c
   }
 };
 
+// Helper 4b: AI Second Appeal Letter Draft (Level 2 Escalation)
+const draftAppeal2 = async (complaintText, ministry, legalReferences, daysLate, citizenDetails, refId = 'ADH-2026') => {
+  const fallbackText = `From:\n${citizenDetails.firstName || 'Rajesh'} ${citizenDetails.lastName || 'Kumar'}\nPhone: ${citizenDetails.phone || '9876543210'}\nAddress: ${citizenDetails.address || 'Sector 4, Bandra West, Mumbai'}\n\nTo:\nThe Central / State Information Commission & Chief Appellate Officer,\n${ministry}\n\nSubject: SECOND APPEAL & STERN ESCALATION under Section 19(3) of RTI Act 2005 / Citizen Charter Penal Provisions\n\nReference Case ID: ${refId}\n\nRespected High Commission,\n\nI am compelled to submit this Second Statutory Appeal regarding grievance: "${complaintText}".\n\nDespite submitting a formal complaint and a subsequent Level 1 First Appeal, the respondent public authority has displayed complete administrative inertia for over ${daysLate} days past statutory limits. This delay constitutes a severe breach under ${legalReferences.join('; ')}.\n\nI pray that this Commission:\n1. Direct immediate resolution and disposal of the grievance file.\n2. Invoke penal proceedings under Section 20 of the RTI Act / State Public Service Guarantee Rules against the defaulting Public Information Officer.\n\nYours faithfully,\n${citizenDetails.firstName || 'Rajesh'} ${citizenDetails.lastName || 'Kumar'}`;
+
+  if (!groq) return fallbackText;
+
+  try {
+    const prompt = `Write an official Level 2 Second Appeal & Higher Commission Escalation letter in India.
+    
+    DETAILS:
+    - Appellant: ${citizenDetails.firstName || 'Rajesh'} ${citizenDetails.lastName || 'Kumar'}, Phone: ${citizenDetails.phone || '9876543210'}
+    - Concern Department: ${ministry}
+    - Reference Case ID: ${refId}
+    - Original Issue: ${complaintText}
+    - Legal References: ${legalReferences.join('; ')}
+    - Total Days Overdue: ${daysLate} days
+    
+    Tone must be strong, firm, and authoritative, addressing "The State / Central Information Commission & Senior Chief Officer". Demand penal action against the defaulting officer under Section 20 of RTI Act 2005. Write only the letter itself.`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'You are a senior appellate advocate preparing a Level 2 Second Appeal for the Information Commission.' },
+        { role: 'user', content: prompt }
+      ],
+      model: 'llama-3.3-70b-versatile'
+    });
+
+    return completion.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('Groq Second Appeal Error:', err.message);
+    return fallbackText;
+  }
+};
+
+// Helper 4c: Appeal Specific Portal Routing (Level 1 & Level 2)
+const getAppealPortals = (category, level = 1) => {
+  const cat = (category || '').toLowerCase();
+
+  if (level === 2) {
+    if (cat.includes('certificate') || cat.includes('income') || cat.includes('service delay')) {
+      return {
+        primary_portal: 'https://pgportal.gov.in',
+        fallback_portals: [
+          'https://sevasindhu.karnataka.gov.in',
+          'https://rtionline.gov.in',
+          'https://services.india.gov.in',
+          'https://india.gov.in',
+          'https://mygov.in',
+          'https://karnataka.gov.in',
+          'https://digitalindia.gov.in'
+        ],
+        auto_redirect: 'https://pgportal.gov.in'
+      };
+    } else if (cat.includes('police') || cat.includes('fraud') || cat.includes('crime')) {
+      return {
+        primary_portal: 'https://cybercrime.gov.in',
+        fallback_portals: [
+          'https://ksp.karnataka.gov.in',
+          'https://pgportal.gov.in',
+          'https://rtionline.gov.in',
+          'https://services.india.gov.in',
+          'https://mygov.in',
+          'https://india.gov.in',
+          'https://karnataka.gov.in'
+        ],
+        auto_redirect: 'https://cybercrime.gov.in'
+      };
+    } else if (cat.includes('consumer')) {
+      return {
+        primary_portal: 'https://edaakhil.nic.in',
+        fallback_portals: [
+          'https://consumerhelpline.gov.in',
+          'https://pgportal.gov.in',
+          'https://rtionline.gov.in',
+          'https://services.india.gov.in',
+          'https://mygov.in',
+          'https://india.gov.in',
+          'https://karnataka.gov.in'
+        ],
+        auto_redirect: 'https://edaakhil.nic.in'
+      };
+    } else {
+      return {
+        primary_portal: 'https://pgportal.gov.in',
+        fallback_portals: [
+          'https://rtionline.gov.in',
+          'https://services.india.gov.in',
+          'https://india.gov.in',
+          'https://mygov.in',
+          'https://data.gov.in',
+          'https://digitalindia.gov.in',
+          'https://karnataka.gov.in'
+        ],
+        auto_redirect: 'https://pgportal.gov.in'
+      };
+    }
+  }
+
+  // Level 1 First Appeal Portal
+  return getPortals(category);
+};
+
+exports.getAppealPortals = getAppealPortals;
+
+// @desc    Generate Appeal 1 or Appeal 2 Letter + Portals
+// @route   POST /api/grievances/generate-appeal or POST /generate-appeal
+exports.generateAppealAPI = async (req, res) => {
+  const { caseId, complaintText, category, department, level = 1, referenceNumber } = req.body || {};
+  const citizen = req.user || { firstName: 'Rajesh', lastName: 'Kumar', phone: '9876543210', state: 'Maharashtra', district: 'Mumbai', address: 'Bandra West' };
+  
+  const text = complaintText || 'Grievance resolution delayed beyond statutory timeline.';
+  const dept = department || 'Concerned Public Authority';
+  const cat = category || 'General';
+  const refId = referenceNumber || caseId || 'ADH-2026-98241';
+  const legalRefs = ['Right to Information Act Section 19', 'State Public Services Guarantee Act'];
+
+  let appealLetter = '';
+  if (parseInt(level) === 2) {
+    appealLetter = await draftAppeal2(text, dept, legalRefs, 45, citizen, refId);
+  } else {
+    appealLetter = await draftAppeal(text, dept, legalRefs, 30, citizen);
+  }
+
+  const portalInfo = getAppealPortals(cat, parseInt(level));
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      appeal_level: parseInt(level),
+      referenceNumber: refId,
+      appeal_letter: appealLetter,
+      ...portalInfo
+    }
+  });
+};
+
+// @desc    Submit Appeal 1 or Appeal 2 to DB / Case State
+// @route   POST /api/grievances/:id/submit-appeal
+exports.submitAppealAPI = async (req, res) => {
+  const { id } = req.params;
+  const { level = 1, letter } = req.body;
+  const appealLvl = parseInt(level);
+
+  try {
+    let grievance = await Grievance.findById(id);
+
+    if (grievance) {
+      grievance.appeal_level = appealLvl;
+      grievance.status = appealLvl === 2 ? 'Appeal 2 Submitted' : 'Appeal 1 Submitted';
+      grievance.escalation_status = appealLvl === 2 ? 'Appeal 2 Submitted' : 'Appeal 1 Submitted';
+      if (appealLvl === 1) {
+        grievance.appeal1_date = new Date();
+        grievance.appeal1_letter = letter || grievance.appealDraft;
+      } else {
+        grievance.appeal2_date = new Date();
+        grievance.appeal2_letter = letter || grievance.appeal2Draft;
+      }
+      await grievance.save();
+
+      return res.status(200).json({
+        success: true,
+        data: grievance
+      });
+    }
+
+    // In-memory mock list fallback
+    const mockCase = mockGrievances.find(g => g._id === id || g.referenceNumber === id);
+    if (mockCase) {
+      mockCase.appeal_level = appealLvl;
+      mockCase.status = appealLvl === 2 ? 'Appeal 2 Submitted' : 'Appeal 1 Submitted';
+      mockCase.escalation_status = appealLvl === 2 ? 'Appeal 2 Submitted' : 'Appeal 1 Submitted';
+      if (appealLvl === 1) {
+        mockCase.appeal1_date = new Date();
+        mockCase.appeal1_letter = letter || mockCase.appealDraft;
+      } else {
+        mockCase.appeal2_date = new Date();
+        mockCase.appeal2_letter = letter || mockCase.appeal2Draft;
+      }
+      return res.status(200).json({
+        success: true,
+        data: mockCase
+      });
+    }
+
+    return res.status(404).json({ success: false, message: 'Case not found' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
+// Helper 5: Smart Portal Recommendation + Auto Redirect Engine
+const getPortals = (category, department = '') => {
+  const cat = (category || '').toLowerCase();
+
+  if (cat.includes('certificate') || cat.includes('income certificate') || cat.includes('service delay')) {
+    return {
+      primary_portal: 'https://rtps.karnataka.gov.in',
+      fallback_portals: [
+        'https://sevasindhu.karnataka.gov.in',
+        'https://nadakacheri.karnataka.gov.in',
+        'https://rtionline.gov.in',
+        'https://pgportal.gov.in',
+        'https://services.india.gov.in',
+        'https://karnataka.gov.in',
+        'https://uidai.gov.in'
+      ],
+      auto_redirect: 'https://rtps.karnataka.gov.in'
+    };
+  } else if (cat.includes('police') || cat.includes('fraud') || cat.includes('crime') || cat.includes('fir')) {
+    return {
+      primary_portal: 'https://ksp.karnataka.gov.in',
+      fallback_portals: [
+        'https://cybercrime.gov.in',
+        'https://pgportal.gov.in',
+        'https://rtionline.gov.in',
+        'https://services.india.gov.in',
+        'https://india.gov.in',
+        'https://mygov.in',
+        'https://karnataka.gov.in'
+      ],
+      auto_redirect: 'https://ksp.karnataka.gov.in'
+    };
+  } else if (cat.includes('consumer')) {
+    return {
+      primary_portal: 'https://consumerhelpline.gov.in',
+      fallback_portals: [
+        'https://edaakhil.nic.in',
+        'https://pgportal.gov.in',
+        'https://rtionline.gov.in',
+        'https://services.india.gov.in',
+        'https://mygov.in',
+        'https://india.gov.in',
+        'https://karnataka.gov.in'
+      ],
+      auto_redirect: 'https://consumerhelpline.gov.in'
+    };
+  } else if (cat.includes('passport')) {
+    return {
+      primary_portal: 'https://www.passportindia.gov.in',
+      fallback_portals: [
+        'https://pgportal.gov.in',
+        'https://rtionline.gov.in',
+        'https://services.india.gov.in',
+        'https://india.gov.in',
+        'https://mygov.in',
+        'https://mea.gov.in',
+        'https://karnataka.gov.in'
+      ],
+      auto_redirect: 'https://www.passportindia.gov.in'
+    };
+  } else if (cat.includes('electricity') || cat.includes('power')) {
+    return {
+      primary_portal: 'https://bescom.karnataka.gov.in',
+      fallback_portals: [
+        'https://pgportal.gov.in',
+        'https://rtionline.gov.in',
+        'https://services.india.gov.in',
+        'https://india.gov.in',
+        'https://mygov.in',
+        'https://powermin.gov.in',
+        'https://karnataka.gov.in'
+      ],
+      auto_redirect: 'https://bescom.karnataka.gov.in'
+    };
+  } else {
+    return {
+      primary_portal: 'https://pgportal.gov.in',
+      fallback_portals: [
+        'https://rtionline.gov.in',
+        'https://services.india.gov.in',
+        'https://india.gov.in',
+        'https://mygov.in',
+        'https://data.gov.in',
+        'https://digitalindia.gov.in',
+        'https://karnataka.gov.in'
+      ],
+      auto_redirect: 'https://pgportal.gov.in'
+    };
+  }
+};
+
+exports.getPortals = getPortals;
+
+// @desc    API Endpoint: POST /api/grievances/get-portals or POST /api/get-portals
+// @access  Public / Private
+exports.getPortalsAPI = (req, res) => {
+  const { category, department } = req.body || {};
+  const portalInfo = getPortals(category, department);
+  res.status(200).json({
+    success: true,
+    ...portalInfo
+  });
+};
 
 /* -------------------------------------------------------------
    Express Controller Actions
@@ -437,12 +727,13 @@ exports.analyzeGrievance = async (req, res) => {
     const routing = await routeGrievance(classification.category);
     const letter = await draftLetter(complaintText, classification.department || routing.ministry, routing.legalReferences, citizen);
     const rti = await draftRti(complaintText, classification.department || routing.ministry, citizen);
+    const portalRec = getPortals(classification.category, classification.department || routing.ministry);
 
     // Compute dynamic summary and next action
     const summary = complaintText.length > 120 ? complaintText.substring(0, 120) + '...' : complaintText;
     const nextAction = classification.urgency === 'high'
-      ? `File Immediate Complaint on ${classification.portalName || 'official portal'}. Auto-redirect active.`
-      : `Submit formal grievance letter directly via ${classification.portalName || 'official portal'}.`;
+      ? `File Immediate Complaint on ${portalRec.primary_portal}. Auto-redirect active.`
+      : `Submit formal grievance letter directly via ${portalRec.primary_portal}.`;
 
     res.status(200).json({
       success: true,
@@ -454,7 +745,10 @@ exports.analyzeGrievance = async (req, res) => {
         reason: classification.reason,
         department: classification.department || routing.ministry,
         portalName: classification.portalName || 'CPGRAMS National Public Grievance Portal',
-        redirectUrl: classification.redirectUrl || 'https://pgportal.gov.in',
+        redirectUrl: portalRec.primary_portal,
+        primary_portal: portalRec.primary_portal,
+        fallback_portals: portalRec.fallback_portals,
+        auto_redirect: portalRec.auto_redirect,
         legalReferences: routing.legalReferences,
         deadlineDays: routing.deadlineDays,
         summary,

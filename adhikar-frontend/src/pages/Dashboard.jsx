@@ -1,174 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import TimeLeapSimulator from '../components/TimeLeapSimulator';
-import {
-  FileText, Scale, Calendar, CheckCircle2, Clock, AlertCircle, Plus,
-  FileSpreadsheet, Clipboard, Printer, LayoutDashboard, Settings, Compass,
-  Volume2, Check, ArrowRight, ShieldCheck, ChevronRight, HelpCircle, Landmark,
-  Mic, MicOff, Download, Globe
+import { 
+  FolderOpen, Clock, AlertCircle, FileText, Calendar, User, 
+  MapPin, HelpCircle, Shield, ArrowRight, Download, Send, 
+  Bell, Eye, Lock, Heart, ChevronDown, Copy, CheckCircle, X, Sparkles, AlertTriangle, ExternalLink
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
-const STATE_DISTRICTS = {
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik"],
-  "Punjab": ["Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Bathinda"],
-  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru", "Belagavi"],
-  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "West Delhi", "Dwarka"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Noida", "Varanasi", "Ghaziabad"]
+const API_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'http://localhost:5000/api';
+
+const CountUp = ({ end, duration = 1200 }) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = null;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setCount(Math.floor(ease * end));
+      if (progress < 1) window.requestAnimationFrame(step);
+    };
+    window.requestAnimationFrame(step);
+  }, [end, duration]);
+  return <>{count}</>;
 };
 
-const localPortalMap = {
-  "certificate/service delay": {
-    issueType: "Certificate / Service Delay",
-    category: "certificate/service delay",
-    department: "State Revenue & Public Service Department (Seva Sindhu)",
-    portalName: "Seva Sindhu",
-    redirectUrl: "https://sevasindhu.karnataka.gov.in",
-    keywords: ["certificate", "income certificate", "caste certificate", "birth certificate", "death certificate", "revenue office", "ration card", "service delay", "edistrict", "nada kacheri", "tahsildar", "delay", "service delivery"]
-  },
-  "electricity": {
-    issueType: "Electricity & Power",
-    category: "electricity",
-    department: "Ministry of Power / BESCOM DISCOM",
-    portalName: "BESCOM",
-    redirectUrl: "https://bescom.karnataka.gov.in",
-    keywords: ["electricity", "power cut", "power outage", "meter", "bescom", "mescom", "hescom", "cesc", "discom", "transformer", "voltage", "electric pole", "light bill", "current"]
-  },
-  "police": {
-    issueType: "Police / Crime / FIR",
-    category: "police",
-    department: "State Police Department / Home Affairs",
-    portalName: "Police portal",
-    redirectUrl: "https://ksp.karnataka.gov.in",
-    keywords: ["police", "fir", "theft", "stolen", "crime", "robbery", "cybercrime", "harassment", "assault", "police station", "inspector", "bribe", "traffic fine", "cheating"]
-  },
-  "RTI": {
-    issueType: "Right to Information (RTI)",
-    category: "RTI",
-    department: "RTI Online Cell / Respective Public Authority",
-    portalName: "RTI portal",
-    redirectUrl: "https://rtionline.gov.in",
-    keywords: ["rti", "right to information", "section 6", "public information officer", "pio", "information sought", "cpc", "cic", "inspection of records"]
-  },
-  "consumer": {
-    issueType: "Consumer Rights & Fraud",
-    category: "consumer",
-    department: "Ministry of Consumer Affairs, Food and Public Distribution",
-    portalName: "Consumer portal",
-    redirectUrl: "https://edaakhil.nic.in",
-    keywords: ["consumer", "defective", "warranty", "refund", "overcharging", "mrp", "merchant", "fraud", "e-commerce", "online store", "bill dispute", "false advertising"]
-  },
-  "general grievance": {
-    issueType: "General Grievance / Municipal / Utilities",
-    category: "general grievance",
-    department: "Department of Administrative Reforms / Municipal Corporation",
-    portalName: "Janaspandana",
-    redirectUrl: "https://janaspandana.karnataka.gov.in",
-    keywords: ["water", "sewage", "gutter", "pothole", "road", "garbage", "drainage", "municipality", "bbmp", "street light", "janaspandana"]
+// Animation Variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12 }
   }
 };
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
+
 const Dashboard = () => {
-  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  
-  // Navigation: 'dashboard' | 'file' | 'timeline' | 'settings' | 'drafts'
-  const [activePanel, setActivePanel] = useState('dashboard');
-  
-  // Grievance records
+  const { user, token, logout } = useAuth();
+
   const [grievances, setGrievances] = useState([]);
-  const [selectedCase, setSelectedCase] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, pending: 0, appeals: 0 });
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [selectedLeapId, setSelectedLeapId] = useState('');
+  const [leaping, setLeaping] = useState(false);
 
-  // File Case Form State
-  const [complaintText, setComplaintText] = useState('');
-  const [refNum, setRefNum] = useState('');
-  const [fileProof, setFileProof] = useState(null);
-  const [fileError, setFileError] = useState('');
-  const [submittingCase, setSubmittingCase] = useState(false);
-  
-  // AI Classify details
-  const [aiAnalyzing, setAiAnalyzing] = useState(false);
-  const [aiResult, setAiResult] = useState(null);
-  const [overrideCategory, setOverrideCategory] = useState('');
-  const [overrideDept, setOverrideDept] = useState('');
+  // Appeal Generation & State
+  const [generatingAppealLevel, setGeneratingAppealLevel] = useState(null);
+  const [appealData, setAppealData] = useState(null);
+  const [submittingAppeal, setSubmittingAppeal] = useState(false);
 
-  // Draft Viewer helper
-  const [newlyCreatedCase, setNewlyCreatedCase] = useState(null);
-  const [copiedDraft, setCopiedDraft] = useState(null);
-
-  // Voice Intake State
-  const [isRecording, setIsRecording] = useState(false);
-  const [speechLanguage, setSpeechLanguage] = useState('en-IN');
-  const [speechSupported, setSpeechSupported] = useState(false);
-
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      setSpeechSupported(true);
-    }
-  }, []);
-
-  const toggleVoiceRecording = () => {
-    if (!speechSupported) {
-      alert('Speech recognition is not supported in your browser. Please type your complaint.');
-      return;
-    }
-
-    if (isRecording) {
-      if (window.currentDashRecognition) {
-        window.currentDashRecordingStop = true;
-        window.currentDashRecognition.stop();
-      }
-      setIsRecording(false);
-      return;
-    }
-
-    setIsRecording(true);
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = speechLanguage;
-
-    recognition.onresult = (event) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
-      }
-      if (finalTranscript) {
-        setComplaintText(prev => prev + (prev ? ' ' : '') + finalTranscript);
-      }
-    };
-
-    recognition.onerror = (err) => {
-      console.error('Voice input error:', err);
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognition.start();
-    window.currentDashRecognition = recognition;
-  };
-
-  const downloadDraftAsFile = (title, content) => {
-    if (!content) return;
-    const element = document.createElement('a');
-    const file = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${title.toLowerCase().replace(/[^a-z0-9]/gi, '_')}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
-  const API_URL = 'http://localhost:5000/api';
-
+  // Fetch Grievances from Backend API
   useEffect(() => {
     fetchGrievances();
   }, [token]);
@@ -177,18 +65,65 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/grievances`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       const data = await response.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.data)) {
         setGrievances(data.data);
         calculateStats(data.data);
+      } else {
+        throw new Error('Using fallback grievances list');
       }
     } catch (err) {
-      console.warn('Backend server offline. Utilizing mock dashboard data.');
-      // Local mock defaults
-      setGrievances(mockGrievancesFallback);
-      calculateStats(mockGrievancesFallback);
+      console.warn('Backend server unreachable or no token, loading standard grievances dataset:', err);
+      const fallbackList = [
+        {
+          _id: 'mock_grievance_1',
+          referenceNumber: 'ADH-2026-839401',
+          title: 'Contaminated water supply in Ward 4',
+          complaintText: 'Tap water has been coming out yellow and smelling like gutter sewage for 15 days in Ward 4. No action has been taken by municipal engineers despite three complaints.',
+          category: 'Water & Sanitation',
+          urgency: 'high',
+          department: 'Ministry of Jal Shakti / Department of Drinking Water and Sanitation',
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          status: 'Pending',
+          appeal_level: 0,
+          deadlineDays: 15,
+          submittedAt: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString(), // 32 days ago -> Overdue!
+          legalReferences: [
+            'Section 3 of the Water (Prevention and Control of Pollution) Act, 1974',
+            'Article 21 of the Constitution of India (Right to Clean Water)'
+          ],
+          formalLetter: `To,\nThe Public Grievance Officer,\nMinistry of Jal Shakti / Department of Drinking Water and Sanitation\n\nSubject: Formal Complaint regarding Contaminated Water Supply in Ward 4\n\nRespected Sir/Madam,\n\nI am writing to file a complaint regarding tap water coming out yellow and smelling like gutter sewage for 15 days in Ward 4. This constitutes a severe public health hazard and violates standards under Section 3 of the Water Act, 1974.\n\nPlease investigate immediately and restore safe drinking water supply.\n\nYours faithfully,\nRajesh S. Kumar`,
+          rtiDraft: `To,\nThe Public Information Officer (PIO)\nOffice of Ministry of Jal Shakti\n\nSubject: Application under Section 6(1) of the RTI Act, 2005.\n\n1. Provide certified copies of water testing reports for Ward 4 between July 1 and July 30.\n2. Provide budgetary details allocated for pipeline repair.`
+        },
+        {
+          _id: 'mock_grievance_2',
+          referenceNumber: 'ADH-2026-104928',
+          title: 'Delay in Income Certificate Issuance',
+          complaintText: 'Applied for income certificate 40 days ago at Tahsildar office. Document verification completed but officer delaying approval without reason.',
+          category: 'certificate/service delay',
+          urgency: 'medium',
+          department: 'State Revenue Department (Seva Sindhu)',
+          state: 'Karnataka',
+          district: 'Bengaluru',
+          status: 'Pending',
+          appeal_level: 0,
+          deadlineDays: 15,
+          submittedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
+          legalReferences: [
+            'State Right to Public Services Guarantee Act',
+            'Section 4 of the Information Technology Act, 2000'
+          ],
+          formalLetter: `To,\nThe Tahsildar / Public Officer,\nState Revenue Department\n\nSubject: Complaint regarding 40-day delay in Income Certificate Issuance\n\nRespected Sir,\nMy application for Income Certificate has been pending for 40 days despite full documentation. Under the Sakala Right to Services Act, the prescribed limit is 15 days.\n\nPlease issue the certificate without further delay.`,
+          rtiDraft: `To,\nThe Public Information Officer,\nTahsildar Office\n\nInformation sought: Name and designation of the officer responsible for processing Application No. IC-2026-991.`
+        }
+      ];
+      setGrievances(fallbackList);
+      calculateStats(fallbackList);
     } finally {
       setLoading(false);
     }
@@ -196,1231 +131,915 @@ const Dashboard = () => {
 
   const calculateStats = (list) => {
     const total = list.length;
-    const pending = list.filter(g => g.status === 'Pending').length;
-    const appeals = list.filter(g => g.status === 'Appeal Filed' || g.status === 'Overdue').length;
+    const pending = list.filter(g => g.status === 'Pending' || g.status === 'Submitted').length;
+    const appeals = list.filter(g => g.status === 'Appeal Filed' || g.status === 'Overdue' || g.appeal_level > 0 || calculateDaysElapsed(g.submittedAt) > (g.deadlineDays || 15)).length;
     setStats({ total, pending, appeals });
   };
 
-  // MOCK FALLBACK DATA
-  const mockGrievancesFallback = [
-    {
-      _id: 'mock_grievance_1',
-      complaintText: 'Tap water has been coming out yellow and smelling like gutter sewage for 15 days in Ward 4. No action has been taken by municipal engineers despite three complaints.',
-      proofUrl: 'water_sample_proof.pdf',
-      referenceNumber: 'REF-839401',
-      category: 'Water & Sanitation',
-      urgency: 'high',
-      department: 'Ministry of Jal Shakti / Department of Drinking Water and Sanitation',
-      confidence: 95,
-      state: user?.state || 'Maharashtra',
-      district: user?.district || 'Mumbai',
-      status: 'Pending',
-      deadlineDays: 15,
-      formalLetter: `To,\nThe Public Grievance Officer,\nMinistry of Jal Shakti...\n\nRespected Sir/Madam,\nI am writing to report contaminated water supply...`,
-      rtiDraft: `To,\nThe Public Information Officer...\nOffice of Jal Shakti...\n\nInformation sought: Sanctioned budget details...`,
-      appealDraft: `To,\nThe First Appellate Authority...\nSubject: First Appeal under Section 19(1)...`,
-      appeal2Draft: `To,\nThe Central Information Commission...\nSubject: Second Appeal under Section 19(3)...`,
-      submittedAt: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString() // 32 days ago
-    }
-  ];
-
-  // Helper: File Type Check
-  const handleFileChange = (e) => {
-    setFileError('');
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (!allowedTypes.includes(file.type)) {
-      setFileError('Invalid file type. Only PDF and JPG/JPEG/PNG images are allowed.');
-      setFileProof(null);
-      return;
-    }
-    setFileProof(file);
+  const calculateDaysElapsed = (submittedAt) => {
+    if (!submittedAt) return 0;
+    const diffTime = Math.abs(new Date() - new Date(submittedAt));
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Helper: Call AI Classifier
-  const handleAnalyzeText = async () => {
-    if (!complaintText || complaintText.length < 15) {
-      alert('Please enter a detailed complaint description (minimum 15 characters) before analyzing.');
+  // SIH Time Leap Simulator Trigger
+  const handleTimeLeap = async () => {
+    if (!selectedLeapId) {
+      alert('Please select a case from the SIH Time Leap dropdown first.');
       return;
     }
 
-    setAiAnalyzing(true);
-    setAiResult(null);
-
+    setLeaping(true);
     try {
-      const response = await fetch(`${API_URL}/grievances/classify`, {
+      const response = await fetch(`${API_URL}/grievances/${selectedLeapId}/time-leap`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ complaintText })
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
       });
       const data = await response.json();
-      if (data.success) {
-        setAiResult(data.data);
-        setOverrideCategory(data.data.category);
-        setOverrideDept(data.data.department);
-      }
-    } catch (err) {
-      console.warn('Backend server offline. Simulating local AI classification.');
-      const textLower = complaintText.toLowerCase();
-      let bestMatchKey = null;
-      let maxKeywordScore = 0;
-
-      for (const [key, mapping] of Object.entries(localPortalMap)) {
-        let score = 0;
-        for (const kw of mapping.keywords) {
-          if (textLower.includes(kw)) {
-            score += 1;
-          }
-        }
-        if (score > maxKeywordScore) {
-          maxKeywordScore = score;
-          bestMatchKey = key;
-        }
-      }
-
-      let category = 'general grievance';
-      let department = 'Ministry of Personnel, Public Grievances and Pensions';
-      let urgency = 'medium';
-      let portalName = 'CPGRAMS fallback';
-      let redirectUrl = 'https://pgportal.gov.in';
-      let confidence = 50;
-      let refs = ['Citizen Charter Guidelines'];
-      let reason = 'Confidence below threshold. Automatically routing to CPGRAMS central public grievance fallback portal.';
-
-      if (bestMatchKey && maxKeywordScore >= 2) {
-        const match = localPortalMap[bestMatchKey];
-        category = match.category;
-        department = match.department;
-        urgency = maxKeywordScore >= 3 ? 'high' : 'medium';
-        portalName = match.portalName;
-        redirectUrl = match.redirectUrl;
-        confidence = 85;
-        reason = `Keyword & intent pattern matched keywords for ${match.issueType}.`;
-        
-        if (category === 'certificate/service delay') refs = ['Information Technology Act, 2000', 'State Right to Public Services Act'];
-        else if (category === 'electricity') refs = ['Section 43 of the Electricity Act, 2003', 'Electricity Rights of Consumers Rules 2020'];
-        else if (category === 'police') refs = ['Section 154 of the Code of Criminal Procedure (CrPC)', 'Police Act 1861'];
-        else if (category === 'RTI') refs = ['Section 6(1) of the Right to Information Act, 2005', 'Section 7(1) of the RTI Act 2005'];
-        else if (category === 'consumer') refs = ['Section 2(9) of the Consumer Protection Act, 2019', 'Essential Commodities Act 1955'];
-        else if (category === 'general grievance') refs = ['Section 3 of the Water Act 1974', 'Section 198A of the Motor Vehicles Act 2019'];
-      }
-
-      const mockAi = {
-        category,
-        urgency,
-        confidence,
-        reason,
-        department,
-        portalName,
-        redirectUrl,
-        legalReferences: refs,
-        deadlineDays: 30
-      };
-      setAiResult(mockAi);
-      setOverrideCategory(category);
-      setOverrideDept(department);
-    } finally {
-      setAiAnalyzing(false);
-    }
-  };
-
-  // Helper: Submit Final Grievance Form
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    if (!complaintText) return;
-
-    setSubmittingCase(true);
-    
-    const payload = {
-      complaintText,
-      proofUrl: fileProof ? fileProof.name : '',
-      referenceNumber: refNum,
-      category: overrideCategory || (aiResult ? aiResult.category : 'grievance'),
-      urgency: aiResult ? aiResult.urgency : 'medium',
-      department: overrideDept || (aiResult ? aiResult.department : 'General Ministry')
-    };
-
-    try {
-      const response = await fetch(`${API_URL}/grievances`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      if (data.success) {
-        setNewlyCreatedCase(data.data);
-        setActivePanel('drafts');
-        fetchGrievances();
-      }
-    } catch (err) {
-      console.warn('Backend server offline. Simulating local case saving.');
-      let targetPortal = localPortalMap[payload.category] || {
-        portalName: 'CPGRAMS fallback',
-        redirectUrl: 'https://pgportal.gov.in'
-      };
       
-      let finalRedirectUrl = targetPortal.redirectUrl;
-      if (aiResult && aiResult.confidence < 60) {
-        finalRedirectUrl = 'https://pgportal.gov.in';
-        targetPortal = {
-          portalName: 'CPGRAMS fallback',
-          redirectUrl: 'https://pgportal.gov.in'
-        };
-      }
-
-      const simulatedCase = {
-        _id: 'mock_case_' + Math.random().toString(36).substr(2, 9),
-        user: user?.id || 'mock_citizen_id_12345',
-        complaintText,
-        proofUrl: fileProof ? fileProof.name : '',
-        referenceNumber: refNum || 'REF-SIM-' + Math.floor(100000 + Math.random() * 900000),
-        category: payload.category,
-        urgency: payload.urgency,
-        department: payload.department,
-        portalName: aiResult ? aiResult.portalName : targetPortal.portalName,
-        redirectUrl: finalRedirectUrl,
-        confidence: aiResult ? aiResult.confidence : 90,
-        state: user?.state || 'Maharashtra',
-        district: user?.district || 'Mumbai',
-        status: 'Pending',
-        submittedAt: new Date().toISOString(),
-        deadlineDays: 30,
-        formalLetter: `From:\n${user?.fullName || 'Adhikar Citizen'}\nPhone: ${user?.phone}\nAddress: ${user?.district}, ${user?.state}\n\nTo:\nThe Public Officer,\n${payload.department}\n\nSubject: Formal Complaint regarding public grievance\n\nRespected Sir/Madam,\n\nI am writing to report this complaint: ${complaintText}`,
-        rtiDraft: `To,\nThe Public Information Officer,\n${payload.department}\n\nSubject: RTI Application under Section 6(1)\n\nApplicant: ${user?.fullName}\nInformation Sought: Certified logs concerning road/water works...`,
-        appealDraft: `To,\nThe First Appellate Authority...\nSubject: First Appeal...`,
-        appeal2Draft: `To,\nThe Central Information Commission...\nSubject: Second Appeal...`
-      };
-      setNewlyCreatedCase(simulatedCase);
-      setActivePanel('drafts');
-      setGrievances(prev => [simulatedCase, ...prev]);
-      calculateStats([simulatedCase, ...grievances]);
-    } finally {
-      setSubmittingCase(false);
-      // Reset form states
-      setComplaintText('');
-      setRefNum('');
-      setFileProof(null);
-      setAiResult(null);
-    }
-  };
-
-  // Helper: Time-Leap Simulator (Artificially set creation date)
-  const handleTimeLeap = async (caseId, dateOffset) => {
-    let targetDate = new Date();
-    if (dateOffset === 'appeal1') {
-      targetDate.setDate(targetDate.getDate() - 35);
-    } else if (dateOffset === 'appeal2') {
-      targetDate.setDate(targetDate.getDate() - 65);
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/grievances/${caseId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ submittedAt: targetDate })
-      });
-      const data = await response.json();
       if (data.success) {
+        alert(`Time Leap Simulated! Case status updated to "${data.data.status}". Appeal Level 1 enabled.`);
         fetchGrievances();
-        alert('Time Leap Complete! The case creation date has been offset. Refreshing timelines.');
-      }
-    } catch (err) {
-      console.warn('Database offline, leaping mock case in memory');
-      const idx = grievances.findIndex(g => g._id === caseId);
-      if (idx !== -1) {
-        const updated = [...grievances];
-        updated[idx].submittedAt = targetDate.toISOString();
-        setGrievances(updated);
-        calculateStats(updated);
-        alert('Time Leap Simulated successfully in-memory!');
-      }
-    }
-  };
-
-  // Helper: Trigger Deadline checks and First Appeals
-  const triggerDeadlineCheck = async (caseId) => {
-    try {
-      const response = await fetch(`${API_URL}/grievances/${caseId}/check-deadline`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (data.success) {
-        await fetchGrievances();
-        const updatedCase = grievances.find(g => g._id === caseId);
-        if (updatedCase) {
-          updatedCase.status = data.status;
-          updatedCase.appealDraft = data.appealDraft;
-          setSelectedCase({ ...updatedCase });
-        }
-        alert(data.message);
-      }
-    } catch (err) {
-      console.warn('Server offline, simulating deadline evaluation.');
-      const targetCase = grievances.find(g => g._id === caseId);
-      if (!targetCase) return;
-
-      const subDate = new Date(targetCase.submittedAt);
-      const diffDays = Math.ceil((new Date() - subDate) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays > 30) {
-        targetCase.status = 'Overdue';
-        targetCase.appealDraft = `To,\nThe First Appellate Authority (FAA)\nOffice of ${targetCase.department}\n\nSubject: First Appeal under Section 19(1) of the RTI Act\n\nRespected Sir/Madam,\nThis is a first appeal registered because the timeline for my case concerning: "${targetCase.complaintText.substring(0, 50)}..." has exceeded the 30-day limit. Please resolve.`;
-        alert('Case is Overdue (Day ' + diffDays + '). Appeal 1 generation unlocked.');
-        setSelectedCase({ ...targetCase });
       } else {
-        alert(`Case is currently on schedule. Day ${diffDays} of ${targetCase.deadlineDays}.`);
+        throw new Error('Local Leap Simulation');
       }
+    } catch (err) {
+      // Local Time Leap Fallback
+      setGrievances(prev => prev.map(g => {
+        if (g._id === selectedLeapId || g.referenceNumber === selectedLeapId) {
+          return {
+            ...g,
+            status: 'Overdue',
+            daysElapsed: (g.daysElapsed || 33) + 30,
+            appealDraft: `To,\nThe First Appellate Authority (FAA)\n${g.department}\n\nSubject: FIRST APPEAL under Section 19(1) of the RTI Act / Service Guarantee Rules\n\nRespected Sir/Madam,\n\nI filed a grievance (${g.referenceNumber}) on ${new Date(g.submittedAt).toLocaleDateString()}. The statutory 15-day resolution limit expired over 30 days ago. No resolution has been provided.\n\nI pray that the Appellate Authority direct immediate resolution and penalize the defaulting officer under the Right to Services Act.\n\nYours faithfully,\nRajesh S. Kumar`
+          };
+        }
+        return g;
+      }));
+      alert('Time Leap Simulated (+30 Days)! Deadline exceeded. Appeal Level 1 enabled.');
+    } finally {
+      setLeaping(false);
     }
   };
 
-  const handleTimeLeapUpdate = (updatedData) => {
-    setSelectedCase(updatedData);
-    fetchGrievances();
+  // Generate Appeal Level 1 or Level 2 via API
+  const handleGenerateAppeal = async (level) => {
+    if (!selectedCase) return;
+    setGeneratingAppealLevel(level);
+    setAppealData(null);
+
+    try {
+      const response = await fetch(`${API_URL}/generate-appeal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          caseId: selectedCase._id,
+          referenceNumber: selectedCase.referenceNumber || selectedCase._id,
+          complaintText: selectedCase.complaintText || selectedCase.description,
+          category: selectedCase.category,
+          department: selectedCase.department,
+          level
+        })
+      });
+
+      const resJson = await response.json();
+      if (resJson.success && resJson.data) {
+        setAppealData(resJson.data);
+      } else {
+        throw new Error('Local Appeal Generation Fallback');
+      }
+    } catch (err) {
+      // Fallback local appeal generation
+      const isLvl2 = level === 2;
+      setAppealData({
+        appeal_level: level,
+        referenceNumber: selectedCase.referenceNumber || selectedCase._id,
+        appeal_letter: isLvl2 
+          ? `From:\nRajesh S. Kumar\nPhone: +91 9876543210\nAddress: Sector 4, Bandra West, Mumbai\n\nTo:\nThe Central / State Information Commission & Chief Appellate Officer,\n${selectedCase.department}\n\nSubject: SECOND APPEAL & STERN ESCALATION under Section 19(3) of RTI Act 2005 / Citizen Charter Penal Provisions\n\nReference Case ID: ${selectedCase.referenceNumber || selectedCase._id}\n\nRespected High Commission,\n\nI am compelled to submit this Second Statutory Appeal regarding grievance: "${selectedCase.complaintText || selectedCase.title}".\n\nDespite submitting a formal complaint and a subsequent Level 1 First Appeal, the respondent public authority has displayed complete administrative inertia. This is a severe breach under the Right to Information Act and Public Service Guarantee Act.\n\nI pray that this Commission:\n1. Direct immediate resolution and disposal of the grievance file.\n2. Invoke penal proceedings under Section 20 of the RTI Act against the defaulting Public Information Officer.\n\nYours faithfully,\nRajesh S. Kumar`
+          : `From:\nRajesh S. Kumar\nPhone: +91 9876543210\nAddress: Sector 4, Bandra West, Mumbai\n\nTo:\nThe First Appellate Authority (FAA),\n${selectedCase.department}\n\nSubject: FIRST APPEAL under Section 19(1) of the RTI Act, 2005 / Citizen Charter rules\n\nReference Case ID: ${selectedCase.referenceNumber || selectedCase._id}\n\nRespected Sir/Madam,\n\nI had filed an official grievance regarding: "${selectedCase.complaintText || selectedCase.title}".\n\nAs per standard guidelines, the resolution deadline was capped at 15 days. However, the statutory deadline has passed with no response or resolution from the department.\n\nPlease direct the concerned officer to provide immediate resolution.\n\nYours faithfully,\nRajesh S. Kumar`,
+        primary_portal: isLvl2 ? 'https://pgportal.gov.in' : (selectedCase.category?.toLowerCase().includes('police') ? 'https://ksp.karnataka.gov.in' : 'https://rtps.karnataka.gov.in'),
+        fallback_portals: [
+          'https://pgportal.gov.in',
+          'https://rtionline.gov.in',
+          'https://services.india.gov.in',
+          'https://india.gov.in',
+          'https://mygov.in',
+          'https://karnataka.gov.in',
+          'https://cybercrime.gov.in'
+        ],
+        auto_redirect: isLvl2 ? 'https://pgportal.gov.in' : 'https://rtps.karnataka.gov.in'
+      });
+    } finally {
+      setGeneratingAppealLevel(null);
+    }
   };
 
-  // Helper: Copy draft
-  const handleCopyText = (text, type) => {
+  // Submit Appeal Level 1 or Level 2 to Backend DB
+  const handleSubmitAppeal = async (level) => {
+    if (!selectedCase || !appealData) return;
+
+    setSubmittingAppeal(true);
+    try {
+      const response = await fetch(`${API_URL}/grievances/${selectedCase._id}/submit-appeal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          level,
+          letter: appealData.appeal_letter
+        })
+      });
+
+      const resJson = await response.json();
+      if (resJson.success) {
+        alert(`Appeal Level ${level} Submitted & Registered Successfully! Case status updated.`);
+      }
+    } catch (err) {
+      alert(`Appeal Level ${level} Saved Local State!`);
+    } finally {
+      setSubmittingAppeal(false);
+      // Update local state
+      setSelectedCase(prev => ({
+        ...prev,
+        appeal_level: level,
+        status: `Appeal ${level} Submitted`,
+        ...(level === 1 ? { appeal1_letter: appealData.appeal_letter, appeal1_date: new Date() } : { appeal2_letter: appealData.appeal_letter, appeal2_date: new Date() })
+      }));
+      setGrievances(prev => prev.map(g => g._id === selectedCase._id ? { ...g, appeal_level: level, status: `Appeal ${level} Submitted` } : g));
+    }
+  };
+
+  const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);
-    setCopiedDraft(type);
-    setTimeout(() => setCopiedDraft(null), 2000);
+    alert(`${label} copied to clipboard!`);
   };
 
-  // Helper: Print Preview window PDF
-  const handlePrintDraft = (title, text) => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${title}</title>
-          <style>
-            body { font-family: 'Courier New', monospace; padding: 40px; line-height: 1.6; color: #000; }
-            pre { white-space: pre-wrap; font-size: 14px; }
-            .badge { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
-          </style>
-        </head>
-        <body>
-          <div class="badge">
-            <h2>ADHIKAR AI CITIZEN ASSISTANT - DRAFT</h2>
-          </div>
-          <pre>${text}</pre>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+  const downloadTextFile = (content, filename) => {
+    const element = document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = filename;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen flex bg-[#f8f9fc] font-sans antialiased text-slate-800">
       
-      {/* Top Banner Government logo bar */}
-      <header className="bg-blue-900 text-white px-6 py-3 border-b-4 border-amber-500 shadow-md shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" className="w-8 h-8 opacity-95" alt="Emblem of India" />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-base tracking-wide leading-tight">ADHIKAR</h1>
-            <p className="text-[9px] text-slate-350 tracking-wider">AI Grievance & RTI Copilot Portal (Govt of India Initiative)</p>
-          </div>
-        </div>
+      {/* LEFT SIDEBAR */}
+      <div className="w-[280px] shrink-0 bg-gradient-to-b from-[#110c2e] to-[#201547] flex flex-col relative overflow-hidden z-20 shadow-2xl">
         
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          <button
-            onClick={() => navigate('/profile')}
-            className="flex items-center gap-2.5 text-left hover:opacity-80 transition-opacity focus:outline-none cursor-pointer"
-          >
-            {user?.profileImage ? (
-              <img
-                src={user.profileImage}
-                alt={user.fullName}
-                className="w-8 h-8 rounded-full object-cover border border-slate-400"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-800 border border-slate-400 flex items-center justify-center text-white text-[10px] font-bold">
-                {(user?.fullName || 'C').charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="text-right hidden sm:block select-none">
-              <span className="text-slate-350 block text-[9px] leading-none mb-0.5">Welcome, </span>
-              <span className="text-white font-extrabold block text-[11px] leading-none">{user?.fullName || 'Citizen User'}</span>
-            </div>
-          </button>
-          <button
-            onClick={logout}
-            className="px-3 py-1.5 border border-slate-400 hover:border-white hover:bg-blue-950 text-[11px] font-bold rounded tracking-wider uppercase transition-colors"
-          >
-            Log Out
-          </button>
+        {/* Top Flag Graphic overlay */}
+        <div className="absolute top-0 left-0 w-full h-32 opacity-90 pointer-events-none">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+            <path d="M0 0 L100 0 L100 20 Q 75 40 50 20 T 0 20 Z" fill="#FF9933" />
+            <path d="M0 15 L100 15 L100 35 Q 75 55 50 35 T 0 35 Z" fill="#FFFFFF" />
+            <path d="M0 30 L100 30 L100 50 Q 75 70 50 50 T 0 50 Z" fill="#138808" />
+            <circle cx="50" cy="27" r="7" fill="#000080" opacity="0.9" />
+          </svg>
         </div>
-      </header>
 
-      {/* Main Layout body */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        {/* SIDEBAR PANEL (Left 20% width) */}
-        <aside className="w-full md:w-64 bg-slate-900 text-slate-300 border-r border-slate-800 flex flex-col justify-between shrink-0">
-          <div className="p-4 space-y-6">
-            
-            <div className="text-slate-500 uppercase tracking-widest text-[9px] font-bold border-b border-slate-800 pb-2">
-              Citizen Options
-            </div>
+        {/* Spacer for flag */}
+        <div className="h-28"></div>
 
-            <nav className="space-y-1">
-              <button
-                onClick={() => { setActivePanel('dashboard'); setSelectedCase(null); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded text-xs font-extrabold tracking-wide uppercase transition-colors ${
-                  activePanel === 'dashboard' ? 'bg-blue-900 text-white' : 'hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                My Cases
-              </button>
-
-              <button
-                onClick={() => { setActivePanel('file'); setSelectedCase(null); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded text-xs font-extrabold tracking-wide uppercase transition-colors ${
-                  activePanel === 'file' ? 'bg-blue-900 text-white' : 'hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-                File Case
-              </button>
-
-              <button
-                onClick={() => {
-                  if (grievances.length > 0) {
-                    setSelectedCase(grievances[0]);
-                    setActivePanel('timeline');
-                  } else {
-                    alert('Please file a grievance case first.');
-                  }
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded text-xs font-extrabold tracking-wide uppercase transition-colors ${
-                  activePanel === 'timeline' ? 'bg-blue-900 text-white' : 'hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <Calendar className="w-4 h-4" />
-                Track Timeline
-              </button>
-
-              <button
-                onClick={() => navigate('/profile')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-xs font-extrabold tracking-wide uppercase transition-colors hover:bg-slate-800 hover:text-white"
-              >
-                <Settings className="w-4 h-4" />
-                Profile Settings
-              </button>
-            </nav>
-          </div>
-
-          {/* Quick Notice footer */}
-          <div className="p-4 border-t border-slate-800 text-[10px] text-slate-500 leading-normal space-y-1">
-            <p>🛡️ Standard RTI Response window: 30 days.</p>
-            <p>📋 CPGRAMS Water charter window: 15 days.</p>
-          </div>
-        </aside>
-
-        {/* MAIN PANEL CONTENT (Right 80% width) */}
-        <main className="flex-grow p-6 overflow-y-auto">
+        {/* Navigation Menu */}
+        <div className="px-6 flex-1 flex flex-col mt-4">
+          <h3 className="text-[11px] font-bold text-slate-400 tracking-widest mb-4">CITIZEN SERVICES</h3>
           
-          {/* PANEL 1: MY CASES (DASHBOARD) */}
-          {activePanel === 'dashboard' && (
-            <div className="space-y-6">
-              
-              {/* Stats Widgets */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white border border-slate-200 p-5 rounded shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Dockets</span>
-                    <div className="text-2xl font-black text-blue-950 mt-1">{stats.total}</div>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 p-2 text-blue-900 rounded">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                </div>
+          <div className="space-y-2">
+            <button className="w-full flex items-center gap-3 px-4 py-3.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-xl text-white font-semibold shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30 transition-transform hover:scale-[1.02]">
+              <FolderOpen className="w-5 h-5" />
+              <span>My Cases</span>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/new-case')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-slate-300 hover:bg-white/10 hover:text-white rounded-xl font-medium transition-all"
+            >
+              <FileText className="w-5 h-5 opacity-70" />
+              <span>File a Case</span>
+            </button>
 
-                <div className="bg-white border border-slate-200 p-5 rounded shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Active Pending</span>
-                    <div className="text-2xl font-black text-amber-700 mt-1">{stats.pending}</div>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 p-2 text-amber-600 rounded">
-                    <Clock className="w-6 h-6 animate-pulse" />
-                  </div>
-                </div>
+            <button 
+              onClick={() => navigate('/split-demo')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-amber-300 hover:bg-white/10 rounded-xl font-medium transition-all"
+            >
+              <Sparkles className="w-5 h-5 text-amber-400" />
+              <span>Embedded Portal Demo</span>
+            </button>
+            
+            <button className="w-full flex items-center gap-3 px-4 py-3.5 text-slate-300 hover:bg-white/10 hover:text-white rounded-xl font-medium transition-all">
+              <User className="w-5 h-5 opacity-70" />
+              <span>Profile Settings</span>
+            </button>
+          </div>
 
-                <div className="bg-white border border-slate-200 p-5 rounded shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Appeals Filed / Overdue</span>
-                    <div className="text-2xl font-black text-red-700 mt-1">{stats.appeals}</div>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 p-2 text-red-600 rounded">
-                    <AlertCircle className="w-6 h-6" />
-                  </div>
+          {/* Bottom Callout Card */}
+          <div className="mt-auto mb-8 bg-white/5 border border-white/10 p-5 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-purple-500/30"></div>
+            
+            <Shield className="w-8 h-8 text-purple-400 mb-3" />
+            <h4 className="text-white font-bold text-base mb-1">Your Voice.<br/>Our Responsibility.</h4>
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">Empowering citizens. Building a transparent India.</p>
+            
+            <button className="w-full py-2.5 px-4 bg-transparent border border-purple-400/50 hover:bg-purple-500/20 text-white text-sm font-semibold rounded-lg flex justify-between items-center transition-colors">
+              Know Your Rights
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Footer Contact */}
+          <div className="mb-6 flex items-center gap-3 px-2">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+              <HelpCircle className="w-5 h-5 text-purple-300" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">We are here to help you</p>
+              <p className="text-sm font-bold text-white">24x7 <span className="font-normal text-slate-300">Grievance Support</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        {/* Top Header */}
+        <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 z-10 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-14 bg-slate-100 flex items-center justify-center rounded border border-slate-200">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" className="h-10 opacity-80" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-[#110c2e] tracking-tight leading-none mb-1">ADHIKAR</h1>
+              <p className="text-xs font-semibold text-slate-500">AI Grievance & RTI Capitol Portal</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="flex w-3 h-2 flex-col">
+                  <div className="bg-[#FF9933] h-full w-full"></div>
+                  <div className="bg-white h-full w-full"></div>
+                  <div className="bg-[#138808] h-full w-full"></div>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">Government of India Initiative</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                R
+              </div>
+              <div className="hidden md:block">
+                <p className="text-[10px] text-slate-400 font-semibold uppercase">Welcome,</p>
+                <div className="flex items-center gap-1 cursor-pointer">
+                  <p className="text-sm font-bold text-slate-800">{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Rajesh S. Kumar'}</p>
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
                 </div>
               </div>
+            </div>
+            
+            <div className="w-px h-8 bg-slate-200"></div>
+            
+            <div className="relative cursor-pointer">
+              <Bell className="w-6 h-6 text-slate-600" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center border-2 border-white">3</span>
+            </div>
 
-              {/* Case table card */}
-              <div className="bg-white border border-slate-250 rounded shadow-sm">
-                <div className="bg-slate-50 px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <h3 className="font-extrabold text-sm text-blue-950 uppercase tracking-wider">
-                    Registered Grievance Records
-                  </h3>
-                  
-                  {/* Global Time Leap Selector helper for judges */}
-                  <div className="bg-blue-50 border border-blue-200 rounded p-1.5 flex items-center gap-2 text-xs">
-                    <span className="font-bold text-blue-950 text-[10px] uppercase">SIH Time Leap Simulator:</span>
-                    <select
-                      onChange={(e) => {
-                        const [caseId, leapKey] = e.target.value.split(':');
-                        if (caseId && leapKey) handleTimeLeap(caseId, leapKey);
-                        e.target.value = ''; // Reset select
-                      }}
-                      className="bg-white border border-blue-300 rounded text-[11px] font-semibold text-slate-700 py-0.5 px-2 focus:outline-none"
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={logout}
+              className="ml-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-sm rounded-full shadow-[0_4px_15px_rgba(249,115,22,0.3)]"
+            >
+              LOG OUT
+            </motion.button>
+          </div>
+        </header>
+
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-8 relative">
+          <motion.div 
+            className="max-w-6xl mx-auto space-y-8 pb-10"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+          >
+            
+            {/* Hero Section */}
+            <motion.div variants={itemVariants} className="bg-gradient-to-r from-purple-900 via-indigo-900 to-[#110c2e] rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden group border border-white/10">
+              <div className="relative z-10">
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-white drop-shadow-sm">
+                  Welcome back, {user?.firstName || 'Rajesh'} <motion.span 
+                    className="inline-block origin-bottom-right"
+                    animate={{ rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
+                  >👋</motion.span>
+                </h2>
+                <p className="text-indigo-200 font-medium text-lg max-w-lg">Track and manage your grievances efficiently with our AI-powered portal.</p>
+              </div>
+              
+              <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none group-hover:bg-white/10 transition-colors duration-1000"></div>
+              <div className="absolute bottom-0 right-1/3 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+            </motion.div>
+
+            {/* Dynamic Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Card 1 */}
+              <motion.div variants={itemVariants} className="bg-gradient-to-br from-emerald-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <div className="flex flex-col relative z-10 h-full">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">TOTAL DOCKETS</h3>
+                  <div className="text-4xl font-extrabold text-emerald-500 mb-1 tracking-tight">
+                    <CountUp end={stats.total || grievances.length} />
+                  </div>
+                  <p className="text-xs font-bold text-emerald-600/80 bg-emerald-50 inline-block px-2 py-1 rounded w-fit">All Time Registered</p>
+                </div>
+                <div className="absolute top-6 right-6 w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                  <FolderOpen className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-40 h-20 opacity-20 pointer-events-none transition-opacity group-hover:opacity-40">
+                  <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full stroke-emerald-500" fill="none" strokeWidth="4">
+                    <path d="M0,50 Q25,20 50,40 T100,10" />
+                  </svg>
+                </div>
+              </motion.div>
+
+              {/* Card 2 */}
+              <motion.div variants={itemVariants} className="bg-gradient-to-br from-orange-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-orange-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <div className="flex flex-col relative z-10 h-full">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">ACTIVE PENDING</h3>
+                  <div className="text-4xl font-extrabold text-orange-500 mb-1 tracking-tight">
+                    <CountUp end={stats.pending || 1} />
+                  </div>
+                  <p className="text-xs font-bold text-orange-600/80 bg-orange-50 inline-block px-2 py-1 rounded w-fit">In Resolution Process</p>
+                </div>
+                <div className="absolute top-6 right-6 w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:-rotate-6 transition-transform">
+                  <Clock className="w-6 h-6 text-orange-600" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-40 h-20 opacity-20 pointer-events-none transition-opacity group-hover:opacity-40">
+                  <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full stroke-orange-500" fill="none" strokeWidth="4">
+                    <path d="M0,50 Q25,30 50,45 T100,15" />
+                  </svg>
+                </div>
+              </motion.div>
+
+              {/* Card 3 */}
+              <motion.div variants={itemVariants} className="bg-gradient-to-br from-rose-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-rose-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <div className="flex flex-col relative z-10 h-full">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">APPEALS / OVERDUE</h3>
+                  <div className="text-4xl font-extrabold text-rose-500 mb-1 tracking-tight">
+                    <CountUp end={stats.appeals || 1} />
+                  </div>
+                  <p className="text-xs font-bold text-rose-600/80 bg-rose-50 inline-block px-2 py-1 rounded w-fit">Requires Escalation</p>
+                </div>
+                <div className="absolute top-6 right-6 w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                  <AlertCircle className="w-6 h-6 text-rose-600" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-40 h-20 opacity-20 pointer-events-none transition-opacity group-hover:opacity-40">
+                  <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full stroke-rose-500" fill="none" strokeWidth="4">
+                    <path d="M0,40 Q30,50 60,30 T100,20" />
+                  </svg>
+                </div>
+              </motion.div>
+
+            </div>
+
+            {/* Table Section */}
+            <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/30">
+                    <Shield className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wide">REGISTERED GRIEVANCE RECORDS</h2>
+                </div>
+                
+                {/* SIH TIME LEAP SIMULATOR CONTROLS */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-purple-50 rounded-lg border border-purple-100 px-4 py-2">
+                    <span className="text-xs font-bold text-purple-900 mr-3 uppercase tracking-wider">SIH TIME LEAP SIMULATOR:</span>
+                    <select 
+                      value={selectedLeapId}
+                      onChange={(e) => setSelectedLeapId(e.target.value)}
+                      className="bg-transparent text-sm font-medium text-slate-700 outline-none pr-4 cursor-pointer border-l border-purple-200 pl-3"
                     >
-                      <option value="">-- select case to leap --</option>
+                      <option value="">-- Select case to leap --</option>
                       {grievances.map(g => (
-                        <optgroup key={g._id} label={g.referenceNumber || g._id.substring(0, 8)}>
-                          <option value={`${g._id}:appeal1`}>Set submitted 35 days ago (Day 35)</option>
-                          <option value={`${g._id}:appeal2`}>Set submitted 65 days ago (Day 65)</option>
-                        </optgroup>
+                        <option key={g._id} value={g._id}>
+                          {g.referenceNumber || g._id} (Forward 30 days)
+                        </option>
                       ))}
                     </select>
                   </div>
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleTimeLeap}
+                    disabled={leaping}
+                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-sm"
+                  >
+                    <Send className="w-4 h-4 text-white" />
+                    {leaping ? 'Leaping...' : 'Leap +30 Days'}
+                  </motion.button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50">
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ref Number</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Urgency</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">State/District</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Days Elapsed</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <motion.tbody 
+                    initial="hidden"
+                    animate="show"
+                    variants={containerVariants}
+                    className="divide-y divide-slate-100"
+                  >
+                    {grievances.map((g) => {
+                      const days = calculateDaysElapsed(g.submittedAt);
+                      const isOverdue = days > (g.deadlineDays || 15) || g.status === 'Overdue' || g.appeal_level > 0;
+
+                      return (
+                        <motion.tr 
+                          key={g._id} 
+                          variants={itemVariants} 
+                          onClick={() => { setSelectedCase(g); setAppealData(null); }}
+                          className="hover:bg-purple-50/30 transition-colors group cursor-pointer"
+                        >
+                          <td className="px-6 py-5 font-bold text-slate-800 text-sm">
+                            {g.referenceNumber || g._id}
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-bold text-slate-800 block leading-tight">{g.category || 'General'}</span>
+                                <span className="text-[11px] text-slate-500 block truncate max-w-[200px]">{g.department}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-center">
+                            <span className={`inline-block px-3 py-1 font-bold text-xs rounded border uppercase tracking-wider ${
+                              g.urgency === 'high' 
+                                ? 'bg-red-50 text-red-600 border-red-100' 
+                                : 'bg-amber-50 text-amber-600 border-amber-100'
+                            }`}>
+                              {g.urgency || 'HIGH'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-slate-400" />
+                              <span className="text-sm font-medium text-slate-700">{g.district || 'Mumbai'}, {g.state || 'Maharashtra'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                                <Calendar className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-800">
+                                Day <span className={`text-base ${isOverdue ? 'text-red-600 font-extrabold' : ''}`}>{days}</span>
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-center">
+                            <span className={`inline-block px-4 py-1.5 font-bold text-xs rounded-full border ${
+                              g.appeal_level === 2
+                                ? 'bg-red-200 text-red-900 border-red-300'
+                                : g.appeal_level === 1
+                                ? 'bg-orange-100 text-orange-800 border-orange-200'
+                                : isOverdue 
+                                ? 'bg-red-100 text-red-700 border-red-200' 
+                                : 'bg-purple-100 text-purple-700 border-purple-200'
+                            }`}>
+                              {g.appeal_level === 2 ? 'Appeal 2 Submitted' : g.appeal_level === 1 ? 'Appeal 1 Submitted' : isOverdue ? 'Escalation Available' : g.status || 'Pending'}
+                            </span>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </motion.tbody>
+                </table>
+              </div>
+            </motion.div>
+
+            {/* Banner Section */}
+            <motion.div variants={itemVariants} className="rounded-2xl overflow-hidden relative shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-gradient-to-r from-purple-100 via-pink-50 to-emerald-50 border border-white">
+              <div className="relative z-10 p-8 md:p-10 md:w-1/2">
+                <div className="w-14 h-14 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/30 mb-5">
+                  <Shield className="w-7 h-7 text-white" />
+                </div>
+                <h2 className="text-2xl font-extrabold text-[#110c2e] mb-2">Transparent Today, Better Tomorrow.</h2>
+                <p className="text-purple-900 font-medium text-lg">Your feedback drives real change.</p>
+              </div>
+              
+              <div className="absolute right-0 bottom-0 w-1/2 h-full hidden md:block opacity-90 mix-blend-multiply">
+                <div className="w-full h-full bg-no-repeat bg-right-bottom bg-contain" style={{backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Parliament_House_of_India_New_Delhi.jpg/800px-Parliament_House_of_India_New_Delhi.jpg')"}}></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-50 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-50/50 to-transparent"></div>
+              </div>
+            </motion.div>
+
+            {/* Quick Actions */}
+            <motion.div variants={itemVariants}>
+              <h3 className="text-sm font-extrabold text-slate-500 tracking-wider uppercase mb-4 pl-2">QUICK ACTIONS</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/new-case')}
+                  className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-start gap-4 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-slate-800 text-base mb-1">File a New Case</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">Raise your grievance<br/>with ease</p>
+                  </div>
+                  <div className="mt-auto w-full flex justify-end text-purple-600 group-hover:translate-x-1 transition-transform">
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                </motion.button>
+
+                <motion.button 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }} 
+                  onClick={() => navigate('/split-demo')}
+                  className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-start gap-4 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-slate-800 text-base mb-1">Embedded Demo</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">View split-screen<br/>portal preview</p>
+                  </div>
+                  <div className="mt-auto w-full flex justify-end text-emerald-600 group-hover:translate-x-1 transition-transform">
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                </motion.button>
+
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-start gap-4 transition-all group">
+                  <div className="w-12 h-12 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center group-hover:bg-pink-600 group-hover:text-white transition-colors">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-slate-800 text-base mb-1">RTI Request</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">Submit your RTI<br/>application</p>
+                  </div>
+                  <div className="mt-auto w-full flex justify-end text-pink-600 group-hover:translate-x-1 transition-transform">
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                </motion.button>
+
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 flex flex-col items-start gap-4 transition-all group">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                    <Download className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-bold text-slate-800 text-base mb-1">Download Guide</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">Know your rights<br/>& procedures</p>
+                  </div>
+                  <div className="mt-auto w-full flex justify-end text-orange-600 group-hover:translate-x-1 transition-transform">
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                </motion.button>
+
+              </div>
+            </motion.div>
+
+          </motion.div>
+        </main>
+
+        {/* Footer Bar */}
+        <footer className="h-14 bg-[#110c2e] shrink-0 px-8 flex items-center justify-between z-10 mt-auto">
+          <div className="flex items-center gap-8 text-xs font-semibold text-slate-300">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              <span>Secure</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              <span>Transparent</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span>Accountable</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 bg-white/5 px-4 py-2 rounded-full border border-white/10">
+            <span>Made for Citizens, Driven by Technology</span>
+            <Heart className="w-4 h-4 text-rose-400 fill-rose-400" />
+          </div>
+        </footer>
+
+      </div>
+
+      {/* CASE DETAILS MODAL / DRAWER WITH COMPLETE AUTO-ESCALATION ENGINE */}
+      <AnimatePresence>
+        {selectedCase && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="p-6 bg-gradient-to-r from-purple-900 to-indigo-900 text-white flex justify-between items-center">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-bold text-purple-300 uppercase tracking-widest block">CASE RECORD DETAILS</span>
+                    <span className="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded font-extrabold uppercase">
+                      Level {selectedCase.appeal_level || 0} Escalation Engine
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold font-mono">{selectedCase.referenceNumber || selectedCase._id}</h3>
+                </div>
+                <button 
+                  onClick={() => setSelectedCase(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto space-y-6">
+                
+                {/* 1. INTERACTIVE TIMELINE STEPPER */}
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase mb-3 tracking-wider">Statutory Case Lifecycle & Escalation Timeline</h4>
+                  
+                  <div className="grid grid-cols-5 gap-2 text-center text-[11px] font-bold">
+                    {/* Step 1 */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-1 shadow-sm">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                      <span className="text-slate-800">1. Complaint</span>
+                      <span className="text-[9px] text-slate-400 font-normal">Filed</span>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-1 shadow-sm">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <span className="text-slate-800">2. AI Processed</span>
+                      <span className="text-[9px] text-slate-400 font-normal">Mapped</span>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 shadow-sm ${
+                        calculateDaysElapsed(selectedCase.submittedAt) > (selectedCase.deadlineDays || 15)
+                          ? 'bg-red-500 text-white'
+                          : 'bg-emerald-500 text-white'
+                      }`}>
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <span className="text-slate-800">3. Deadline</span>
+                      <span className="text-[9px] font-normal text-slate-500">{selectedCase.deadlineDays || 15} Days Limit</span>
+                    </div>
+
+                    {/* Step 4 */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 shadow-sm ${
+                        selectedCase.appeal_level >= 1
+                          ? 'bg-amber-500 text-white'
+                          : calculateDaysElapsed(selectedCase.submittedAt) > (selectedCase.deadlineDays || 15)
+                          ? 'bg-red-100 text-red-600 border border-red-300 animate-pulse'
+                          : 'bg-slate-200 text-slate-400'
+                      }`}>
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <span className="text-slate-800">4. Appeal 1</span>
+                      <span className="text-[9px] font-normal text-slate-500">
+                        {selectedCase.appeal_level >= 1 ? 'Submitted' : 'First Appellate'}
+                      </span>
+                    </div>
+
+                    {/* Step 5 */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 shadow-sm ${
+                        selectedCase.appeal_level >= 2
+                          ? 'bg-purple-600 text-white'
+                          : selectedCase.appeal_level === 1
+                          ? 'bg-orange-100 text-orange-600 border border-orange-300'
+                          : 'bg-slate-200 text-slate-400'
+                      }`}>
+                        <Shield className="w-4 h-4" />
+                      </div>
+                      <span className="text-slate-800">5. Appeal 2</span>
+                      <span className="text-[9px] font-normal text-slate-500">
+                        {selectedCase.appeal_level >= 2 ? 'Commission' : 'Higher Authority'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {loading ? (
-                  <div className="p-12 text-center">
-                    <div className="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <span className="text-xs text-slate-500 font-semibold">Updating citizen records...</span>
-                  </div>
-                ) : grievances.length === 0 ? (
-                  <div className="p-12 text-center text-slate-500">
-                    <Compass className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-xs font-bold text-slate-450">No cases recorded yet.</p>
-                    <button
-                      onClick={() => setActivePanel('file')}
-                      className="mt-3 text-xs font-extrabold text-blue-900 hover:underline"
-                    >
-                      File your first case &rarr;
-                    </button>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-200 text-xs font-sans">
-                      <thead className="bg-slate-50">
-                        <tr>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">Ref Number</th>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">Category</th>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">Urgency</th>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">State/District</th>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">Days Elapsed</th>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">Status</th>
-                          <th className="px-5 py-3 text-left font-extrabold text-slate-500 uppercase tracking-wider">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-slate-250">
-                        {grievances.map((g) => {
-                          const elapsed = Math.max(1, Math.ceil((new Date() - new Date(g.submittedAt)) / (1000 * 60 * 60 * 24)));
-                          return (
-                            <tr key={g._id} className="hover:bg-slate-50">
-                              <td className="px-5 py-3.5 font-bold font-mono text-slate-900 truncate max-w-28">
-                                {g.referenceNumber || 'Unassigned'}
-                              </td>
-                              <td className="px-5 py-3.5 capitalize font-medium text-slate-700">
-                                {g.category}
-                              </td>
-                              <td className="px-5 py-3.5">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
-                                  g.urgency === 'high' ? 'bg-red-50 text-red-700 border border-red-200' :
-                                  g.urgency === 'medium' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                  'bg-blue-50 text-blue-700 border border-blue-200'
-                                }`}>
-                                  {g.urgency}
-                                </span>
-                              </td>
-                              <td className="px-5 py-3.5 text-slate-500">
-                                {g.district}, {g.state}
-                              </td>
-                              <td className="px-5 py-3.5 font-bold font-mono text-slate-900">
-                                Day {elapsed}
-                              </td>
-                              <td className="px-5 py-3.5">
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                  g.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800' :
-                                  g.status === 'Overdue' ? 'bg-red-100 text-red-800' :
-                                  g.status === 'Appeal Filed' ? 'bg-purple-100 text-purple-800' :
-                                  'bg-blue-100 text-blue-800'
-                                }`}>
-                                  {g.status}
-                                </span>
-                              </td>
-                              <td className="px-5 py-3.5">
-                                <button
-                                  onClick={() => { setSelectedCase(g); setActivePanel('timeline'); }}
-                                  className="text-xs font-extrabold text-blue-900 hover:text-blue-950 hover:underline"
-                                >
-                                  Open Tracker &rarr;
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                {/* 2. ESCALATION ALERTS & DYNAMIC ACTION BAR */}
+                {calculateDaysElapsed(selectedCase.submittedAt) > (selectedCase.deadlineDays || 15) && (
+                  <div className="bg-red-50 border border-red-300 rounded-xl p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-red-900">
+                          {selectedCase.appeal_level === 1
+                            ? 'No response after Appeal 1 (Level 2 Escalation Enabled)'
+                            : selectedCase.appeal_level === 2
+                            ? 'Appeal Level 2 Submitted to High Commission'
+                            : 'Your case exceeded the statutory resolution timeline!'}
+                        </h4>
+                        <p className="text-xs text-red-700 mt-0.5 leading-relaxed">
+                          {selectedCase.appeal_level === 1
+                            ? '15-30 days have elapsed since Appeal 1 with no resolution. You are entitled to file a Level 2 Second Appeal to the State / Central Information Commission.'
+                            : selectedCase.appeal_level === 2
+                            ? 'Level 2 Second Appeal has been formally lodged with statutory penal provisions.'
+                            : `Resolution deadline of ${selectedCase.deadlineDays || 15} days was exceeded by ${calculateDaysElapsed(selectedCase.submittedAt) - (selectedCase.deadlineDays || 15)} days. Enable Appeal Level 1 to escalate.`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* DYNAMIC ACTION BUTTONS */}
+                    <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-red-200">
+                      {selectedCase.appeal_level < 1 && (
+                        <button
+                          onClick={() => handleGenerateAppeal(1)}
+                          disabled={generatingAppealLevel === 1}
+                          className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-md transition-all"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          {generatingAppealLevel === 1 ? 'Generating Appeal 1...' : 'Generate Appeal Level 1'}
+                        </button>
+                      )}
+
+                      {selectedCase.appeal_level === 1 && (
+                        <button
+                          onClick={() => handleGenerateAppeal(2)}
+                          disabled={generatingAppealLevel === 2}
+                          className="bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-md transition-all"
+                        >
+                          <Shield className="w-3.5 h-3.5 text-purple-300" />
+                          {generatingAppealLevel === 2 ? 'Generating Appeal 2...' : 'Generate Appeal Level 2 (High Commission)'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
 
-          {/* PANEL 2: FILE CASE (Grievance submission) */}
-          {activePanel === 'file' && (
-            <div className="max-w-3xl mx-auto space-y-6">
-              
-              <div className="bg-white border border-slate-250 rounded shadow-sm">
-                
-                {/* Form header */}
-                <div className="bg-slate-50 px-5 py-4 border-b border-slate-200">
-                  <h3 className="font-extrabold text-sm text-blue-950 uppercase tracking-wider">
-                    Register Grievance / RTI Request
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Please provide detailed descriptions. Adhikar AI will parse your complaint and assist you in filing.
-                  </p>
-                </div>
-
-                <form onSubmit={handleFormSubmit} className="p-6 space-y-6">
-                  
-                  {/* Read only user profile pre-fills */}
-                  <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 border border-slate-200 rounded">
-                    <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">State Concerned</span>
-                      <span className="text-xs font-bold text-slate-800">{user?.state || 'Maharashtra'}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">District Concerned</span>
-                      <span className="text-xs font-bold text-slate-800">{user?.district || 'Mumbai'}</span>
-                    </div>
-                  </div>
-
-                  {/* Complaint Description */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs font-extrabold text-slate-700 uppercase">
-                        Enter Public Complaint Description *
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={speechLanguage}
-                          onChange={(e) => setSpeechLanguage(e.target.value)}
-                          className="text-[10px] bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 font-semibold focus:outline-none"
-                        >
-                          <option value="en-IN">English (India)</option>
-                          <option value="hi-IN">Hindi (हिन्दी)</option>
-                        </select>
-
-                        <button
-                          type="button"
-                          onClick={toggleVoiceRecording}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold transition-all ${
-                            isRecording
-                              ? 'bg-red-600 text-white animate-pulse shadow-md shadow-red-500/30'
-                              : 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm'
-                          }`}
-                          title={isRecording ? 'Click to Stop Microphone' : 'Click to Start Voice Input'}
-                        >
-                          {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                          <span>{isRecording ? 'Listening...' : 'Voice Input'}</span>
-                        </button>
-                      </div>
+                {/* 3. GENERATED APPEAL DRAFT & PORTAL REDIRECT PREVIEW */}
+                {appealData && (
+                  <div className="bg-amber-50/80 border border-amber-300 rounded-xl p-5 space-y-4 animate-fade-in">
+                    <div className="flex items-center justify-between border-b border-amber-300 pb-2">
+                      <span className="text-xs font-extrabold uppercase text-amber-900 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-600" /> AI Generated Appeal Level {appealData.appeal_level} Draft
+                      </span>
+                      <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded">
+                        Ready for Submission
+                      </span>
                     </div>
 
-                    <div className="relative">
-                      <textarea
-                        required
-                        rows="6"
-                        value={complaintText}
-                        onChange={(e) => setComplaintText(e.target.value)}
-                        placeholder="e.g. For the past two weeks, sewage water has been mixing with the drinking water line of Sector 4. Residents have fallen ill..."
-                        className="block w-full p-3 bg-slate-50 border border-slate-300 rounded text-sm focus:outline-none focus:bg-white text-slate-800 resize-none font-mono text-xs leading-relaxed"
-                      />
-                    </div>
-
-                    {isRecording && (
-                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded text-xs font-bold animate-pulse">
-                        <div className="w-2 h-2 bg-red-600 rounded-full animate-ping"></div>
-                        <span>🎙️ Microphone Active: Speaking into mic will automatically append text in {speechLanguage === 'hi-IN' ? 'Hindi' : 'English'}...</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center pt-1">
-                      <span className="text-[10px] text-slate-500">Provide detailed issues, locations, and names if possible.</span>
-                      <button
-                        type="button"
-                        onClick={handleAnalyzeText}
-                        disabled={aiAnalyzing || !complaintText}
-                        className="px-3.5 py-1.5 bg-blue-900 text-white text-xs font-extrabold rounded hover:bg-blue-950 disabled:opacity-40 transition-colors uppercase tracking-wider flex items-center gap-1.5"
-                      >
-                        {aiAnalyzing ? 'AI Analyzing...' : 'Analyze with AI'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* AI Classification Block */}
-                  {aiResult && (
-                    <div className="bg-slate-900 text-slate-300 border border-slate-850 rounded p-5 space-y-4">
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                        <span className="text-[10px] font-mono text-saffron-500 font-bold uppercase tracking-wider">
-                          AI Classification Prediction
-                        </span>
-                        <span className="text-xs font-bold text-emerald-500 flex items-center gap-1">
-                          <ShieldCheck className="w-4 h-4" /> Confidence: {aiResult.confidence}%
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-xs font-mono">
-                        <div>
-                          <span className="block text-[9px] text-slate-500 uppercase">Urgency Assessment</span>
-                          <span className="font-bold text-slate-200 capitalize">{aiResult.urgency}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[9px] text-slate-500 uppercase">AI Detected Category</span>
-                          <span className="font-bold text-slate-200 capitalize">{aiResult.category}</span>
+                    {/* Letter Preview */}
+                    <div className="bg-white p-3.5 rounded border border-amber-200">
+                      <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-1.5">
+                        <span className="text-xs font-bold text-slate-700">Formal Appeal Level {appealData.appeal_level} Letter</span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => copyToClipboard(appealData.appeal_letter, `Appeal ${appealData.appeal_level}`)}
+                            className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1"
+                          >
+                            <Copy className="w-3 h-3" /> Copy
+                          </button>
+                          <button 
+                            onClick={() => downloadTextFile(appealData.appeal_letter, `Appeal_Level_${appealData.appeal_level}_${appealData.referenceNumber}.txt`)}
+                            className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1"
+                          >
+                            <Download className="w-3 h-3" /> Download
+                          </button>
                         </div>
                       </div>
+                      <pre className="text-xs text-slate-800 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+                        {appealData.appeal_letter}
+                      </pre>
+                    </div>
 
+                    {/* Portal Routing & Redirect */}
+                    <div className="bg-white p-3.5 rounded border border-amber-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                       <div>
-                        <span className="block text-[9px] font-mono text-slate-500 uppercase">Reasoning Explanation</span>
-                        <p className="text-xs text-slate-400 mt-1 italic leading-relaxed">{aiResult.reason}</p>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase block">Target Appeal Authority Portal</span>
+                        <a 
+                          href={appealData.primary_portal || 'https://pgportal.gov.in'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs font-extrabold text-blue-700 hover:underline font-mono"
+                        >
+                          {appealData.primary_portal || 'https://pgportal.gov.in'}
+                        </a>
                       </div>
 
-                      {/* Manual Override controls */}
-                      <div className="border-t border-slate-800 pt-4 space-y-3">
-                        <span className="block text-[10px] font-bold text-amber-500 uppercase tracking-wide">
-                          Manual Override Settings
-                        </span>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-mono text-slate-400">Change Category:</label>
-                            <select
-                              value={overrideCategory}
-                              onChange={(e) => setOverrideCategory(e.target.value)}
-                              className="block w-full py-1 px-2.5 bg-slate-800 border border-slate-700 rounded text-xs text-slate-250 focus:outline-none"
-                            >
-                              <option value="Water & Sanitation">Water & Sanitation</option>
-                              <option value="Roads & Transport">Roads & Transport</option>
-                              <option value="Electricity & Power">Electricity & Power</option>
-                              <option value="Consumer Rights">Consumer Rights</option>
-                              <option value="RTI">RTI Request</option>
-                              <option value="Pension">Pension issues</option>
-                              <option value="Certificate">Certificate delays</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-mono text-slate-400">Change Target Department:</label>
-                            <input
-                              type="text"
-                              value={overrideDept}
-                              onChange={(e) => setOverrideDept(e.target.value)}
-                              className="block w-full py-1 px-2.5 bg-slate-800 border border-slate-700 rounded text-xs text-slate-250 focus:outline-none"
-                            />
-                          </div>
-                        </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSubmitAppeal(appealData.appeal_level)}
+                          disabled={submittingAppeal}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded flex items-center gap-1 shadow-sm"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          {submittingAppeal ? 'Submitting...' : `Submit Appeal ${appealData.appeal_level}`}
+                        </button>
+
+                        <a
+                          href={appealData.auto_redirect || appealData.primary_portal}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs px-4 py-2 rounded flex items-center gap-1 shadow-sm"
+                        >
+                          Proceed to Appeal Portal <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
                       </div>
-
-                    </div>
-                  )}
-
-                  {/* Proof Upload + Reference Num */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-extrabold text-slate-700 uppercase">
-                        Upload Supporting Proof Document (Optional)
-                      </label>
-                      <input
-                        type="file"
-                        onChange={handleFileChange}
-                        className="block w-full text-xs text-slate-500 bg-slate-50 border border-slate-300 rounded p-1.5"
-                      />
-                      <span className="block text-[9px] text-slate-500">Only PDF, JPG, JPEG, and PNG formats are accepted.</span>
-                      {fileError && <p className="text-[10px] text-red-700 font-bold">{fileError}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-xs font-extrabold text-slate-700 uppercase">
-                        Grievance Reference Number (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={refNum}
-                        onChange={(e) => setRefNum(e.target.value)}
-                        placeholder="e.g. PG-8302021"
-                        className="block w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded text-xs text-slate-800 focus:outline-none"
-                      />
-                      <span className="block text-[9px] text-slate-500">If you already have a CPGRAMS registration ID.</span>
                     </div>
                   </div>
+                )}
 
-                  {/* Action buttons */}
-                  <div className="flex justify-end gap-3 pt-5 border-t border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setActivePanel('dashboard')}
-                      className="px-5 py-2 border border-slate-300 rounded text-slate-750 text-xs font-extrabold uppercase hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submittingCase}
-                      className="px-6 py-2.5 bg-blue-900 hover:bg-blue-950 text-white text-xs font-black rounded uppercase tracking-wider shadow-sm disabled:opacity-40"
-                    >
-                      {submittingCase ? 'Registering Case...' : 'Submit Grievance Docket'}
-                    </button>
-                  </div>
+                {/* 4. META SUMMARY & ORIGINAL COMPLAINT DETAILS */}
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                  <div><span className="text-slate-500 font-semibold">Category:</span> <span className="font-bold text-slate-800">{selectedCase.category}</span></div>
+                  <div><span className="text-slate-500 font-semibold">Urgency:</span> <span className="font-bold text-red-600 uppercase">{selectedCase.urgency || 'HIGH'}</span></div>
+                  <div><span className="text-slate-500 font-semibold">Department:</span> <span className="font-bold text-slate-800">{selectedCase.department}</span></div>
+                  <div><span className="text-slate-500 font-semibold">Days Elapsed:</span> <span className="font-bold text-purple-700">{calculateDaysElapsed(selectedCase.submittedAt)} Days</span></div>
+                </div>
 
-                </form>
-              </div>
-
-            </div>
-          )}
-
-          {/* PANEL 3: DRAFT DOCUMENTS SUMMARY */}
-          {activePanel === 'drafts' && newlyCreatedCase && (
-            <div className="max-w-4xl mx-auto space-y-6">
-              
-              <div className="bg-emerald-50 border border-emerald-200 rounded p-4 flex gap-3 items-start">
-                <CheckCircle2 className="w-6 h-6 text-emerald-700 shrink-0 mt-0.5" />
+                {/* Complaint Summary */}
                 <div>
-                  <h3 className="font-extrabold text-sm text-emerald-950">Grievance Registered Successfully</h3>
-                  <p className="text-xs text-emerald-800 mt-1">
-                    Your complaint has been structured. The AI generator has formatted three legal documents for you.
-                  </p>
-                </div>
-              </div>
-
-              {/* Draft Documents Tabs grid */}
-              <div className="bg-white border border-slate-250 rounded shadow-sm p-6 space-y-6">
-                
-                <h3 className="font-extrabold text-sm text-blue-950 uppercase border-b border-slate-200 pb-2">
-                  Generated Legal Dockets
-                </h3>
-
-                <div className="space-y-6">
-                  
-                  {/* Draft 1: Formal Complaint Letter */}
-                  <div className="border border-slate-200 rounded p-4 space-y-3 bg-slate-50">
-                    <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-blue-900" /> 1. Formal Administrative Letter
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleCopyText(newlyCreatedCase.formalLetter, 'formal')}
-                          className="px-2.5 py-1 border border-slate-350 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700 rounded transition-all"
-                        >
-                          {copiedDraft === 'formal' ? <Check className="w-3.5 h-3.5 text-emerald-700 inline" /> : 'Copy'}
-                        </button>
-                        <button
-                          onClick={() => downloadDraftAsFile('Formal_Representation_Letter', newlyCreatedCase.formalLetter)}
-                          className="px-2.5 py-1 border border-slate-350 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700 rounded transition-all flex items-center gap-1"
-                        >
-                          <Download className="w-3 h-3" /> Download .txt
-                        </button>
-                        <button
-                          onClick={() => handlePrintDraft('Formal Complaint Letter', newlyCreatedCase.formalLetter)}
-                          className="px-2.5 py-1 border border-slate-350 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700 rounded transition-all"
-                        >
-                          Print PDF
-                        </button>
-                      </div>
-                    </div>
-                    <div className="bg-white border border-slate-250 p-4 rounded text-[11px] font-mono leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap select-all">
-                      {newlyCreatedCase.formalLetter}
-                    </div>
-                  </div>
-
-                  {/* Draft 2: RTI Query questionnaire */}
-                  <div className="border border-slate-200 rounded p-4 space-y-3 bg-slate-50">
-                    <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                        <FileSpreadsheet className="w-4 h-4 text-blue-900" /> 2. RTI Request Questionnaire (Section 6(1))
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleCopyText(newlyCreatedCase.rtiDraft, 'rti')}
-                          className="px-2.5 py-1 border border-slate-350 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700 rounded transition-all"
-                        >
-                          {copiedDraft === 'rti' ? <Check className="w-3.5 h-3.5 text-emerald-700 inline" /> : 'Copy'}
-                        </button>
-                        <button
-                          onClick={() => downloadDraftAsFile('RTI_Application_Draft', newlyCreatedCase.rtiDraft)}
-                          className="px-2.5 py-1 border border-slate-350 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700 rounded transition-all flex items-center gap-1"
-                        >
-                          <Download className="w-3 h-3" /> Download .txt
-                        </button>
-                        <button
-                          onClick={() => handlePrintDraft('RTI Application Draft', newlyCreatedCase.rtiDraft)}
-                          className="px-2.5 py-1 border border-slate-350 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700 rounded transition-all"
-                        >
-                          Print PDF
-                        </button>
-                      </div>
-                    </div>
-                    <div className="bg-white border border-slate-250 p-4 rounded text-[11px] font-mono leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap select-all">
-                      {newlyCreatedCase.rtiDraft}
-                    </div>
-                  </div>
-
+                  <h4 className="font-bold text-xs text-slate-700 uppercase mb-1">Grievance Description:</h4>
+                  <p className="text-xs text-slate-600 bg-white p-3 rounded border border-slate-200 leading-relaxed">{selectedCase.complaintText || selectedCase.description}</p>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded p-4 mb-4">
-                  <h4 className="text-xs font-bold text-amber-900 uppercase">Detected Official Portal</h4>
-                  {newlyCreatedCase.redirectUrl ? (
-                    <>
-                      <p className="text-[11px] text-amber-800 mt-1 mb-3">
-                        Department: <strong>{newlyCreatedCase.department}</strong><br/>
-                        Portal Name: <strong>{newlyCreatedCase.portalName || 'External Portal'}</strong>
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => window.open(newlyCreatedCase.redirectUrl, '_blank')}
-                        className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-black rounded uppercase tracking-wider shadow flex items-center justify-center gap-2"
-                      >
-                        Open Official Website <Globe className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <p className="text-[11px] text-amber-800 mt-1">
-                      <strong>No matching portal found.</strong> Please review the generated drafts and submit manually to the relevant authority.
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => { setActivePanel('dashboard'); setNewlyCreatedCase(null); }}
-                    className="flex-1 py-3 border border-slate-300 rounded font-bold text-xs uppercase tracking-wider text-slate-750 bg-white hover:bg-slate-50 text-center"
-                  >
-                    Go back to Dashboard
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCase(newlyCreatedCase);
-                      setActivePanel('timeline');
-                    }}
-                    className="flex-1 py-3 border border-transparent rounded font-black text-xs uppercase tracking-wider text-white bg-blue-900 hover:bg-blue-950 text-center flex items-center justify-center gap-1.5"
-                  >
-                    Open Assist Mode Guide <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-          {/* PANEL 4: TRACK TIMELINE & ASSIST MODE (Visual tracker & Appeal generator) */}
-          {activePanel === 'timeline' && selectedCase && (
-            <div className="max-w-4xl mx-auto space-y-6">
-              
-              <div className="bg-white border border-slate-250 rounded shadow-sm">
-                
-                {/* Panel Title */}
-                <div className="bg-slate-50 px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+                {/* Formal Letter */}
+                {selectedCase.formalLetter && (
                   <div>
-                    <h3 className="font-extrabold text-sm text-blue-950 uppercase tracking-wider">
-                      Timeline and Assist Mode Guide
-                    </h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      Case Ref: <span className="font-mono font-bold text-slate-700">{selectedCase.referenceNumber || 'Unassigned'}</span>
-                    </p>
+                    <div className="flex justify-between items-center mb-1">
+                      <h4 className="font-bold text-xs text-slate-700 uppercase">Official Formal Complaint Letter:</h4>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => copyToClipboard(selectedCase.formalLetter, 'Letter')}
+                          className="text-xs text-purple-700 font-bold hover:underline flex items-center gap-1"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> Copy
+                        </button>
+                        <button 
+                          onClick={() => downloadTextFile(selectedCase.formalLetter, `Letter_${selectedCase.referenceNumber}.txt`)}
+                          className="text-xs text-purple-700 font-bold hover:underline flex items-center gap-1"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Download
+                        </button>
+                      </div>
+                    </div>
+                    <pre className="text-xs text-slate-700 font-mono bg-slate-50 p-3 rounded border border-slate-200 whitespace-pre-wrap max-h-40 overflow-y-auto leading-relaxed">{selectedCase.formalLetter}</pre>
                   </div>
-                  <button
-                    onClick={() => triggerDeadlineCheck(selectedCase._id)}
-                    className="px-3 py-1.5 bg-blue-900 hover:bg-blue-950 text-white rounded text-[11px] font-bold uppercase tracking-wider"
-                  >
-                    Check Deadline
-                  </button>
-                </div>
-
-                <div className="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
-                  
-                  {/* Left Column: Visual timeline Stepper (2/5 size) */}
-                  <div className="lg:col-span-2 border-r border-slate-200 pr-6 space-y-6">
-                    <h4 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider mb-4">
-                      Citizen Tracker Timeline
-                    </h4>
-
-                    <div className="relative pl-6 space-y-8 border-l-2 border-slate-200">
-                      
-                      {/* Step 1: Submitted */}
-                      <div className="relative">
-                        <span className="absolute -left-[31px] top-0.5 w-4 h-4 rounded-full bg-emerald-600 border-4 border-white"></span>
-                        <div className="font-bold text-xs text-slate-800">Day 1: Grievance Registered</div>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Structured AI documents successfully created.</p>
-                      </div>
-
-                      {/* Step 2: 30-Day Deadline */}
-                      <div className="relative">
-                        {(() => {
-                          const elapsed = Math.max(1, Math.ceil((new Date() - new Date(selectedCase.submittedAt)) / (1000 * 60 * 60 * 24)));
-                          const isOver = elapsed > 30 || selectedCase.status === 'Overdue';
-                          return (
-                            <>
-                              <span className={`absolute -left-[31px] top-0.5 w-4 h-4 rounded-full border-4 border-white ${
-                                isOver ? 'bg-amber-600' : 'bg-slate-300'
-                              }`}></span>
-                              <div className={`font-bold text-xs ${isOver ? 'text-slate-800' : 'text-slate-400'}`}>
-                                Day 30: First Appeal Timeline
-                              </div>
-                              <p className="text-[10px] text-slate-500 mt-0.5">
-                                {isOver ? 'Timeline limit (30 days) has been exceeded.' : `${30 - elapsed} days remaining until First Appeal window opens.`}
-                              </p>
-                              {isOver && (
-                                <div className="mt-2.5">
-                                  <button
-                                    onClick={() => triggerDeadlineCheck(selectedCase._id)}
-                                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-extrabold uppercase tracking-wide"
-                                  >
-                                    Generate Appeal 1
-                                  </button>
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-
-                      {/* Step 3: 60-Day Deadline */}
-                      <div className="relative">
-                        {(() => {
-                          const elapsed = Math.max(1, Math.ceil((new Date() - new Date(selectedCase.submittedAt)) / (1000 * 60 * 60 * 24)));
-                          const isOver60 = elapsed > 60;
-                          return (
-                            <>
-                              <span className={`absolute -left-[31px] top-0.5 w-4 h-4 rounded-full border-4 border-white ${
-                                isOver60 ? 'bg-red-600' : 'bg-slate-200'
-                              }`}></span>
-                              <div className={`font-bold text-xs ${isOver60 ? 'text-slate-800' : 'text-slate-350'}`}>
-                                Day 60: Second Appeal Timeline
-                              </div>
-                              <p className="text-[10px] text-slate-500 mt-0.5">
-                                {isOver60 ? 'Second Appeal limit (60 days) has been exceeded.' : 'Second Appeal triggers after 60 days of non-resolution.'}
-                              </p>
-                              {isOver60 && (
-                                <div className="mt-2.5">
-                                  <button
-                                    onClick={() => alert('Second Appeal generated: Draft is loaded under Appeal 2 window.')}
-                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-extrabold uppercase tracking-wide"
-                                  >
-                                    Generate Appeal 2
-                                  </button>
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Display appeal draft text block if generated */}
-                    {selectedCase.status === 'Overdue' && selectedCase.appealDraft && (
-                      <div className="border border-amber-250 bg-amber-50 p-4 rounded space-y-3 mt-4">
-                        <div className="flex justify-between items-center border-b border-amber-200 pb-1">
-                          <span className="text-[10px] font-bold text-amber-900 uppercase">First Appeal Draft (Generated)</span>
-                          <button
-                            onClick={() => handleCopyText(selectedCase.appealDraft, 'appeal')}
-                            className="px-2 py-0.5 border border-amber-300 bg-white text-[9px] font-bold rounded"
-                          >
-                            {copiedDraft === 'appeal' ? 'Copied' : 'Copy'}
-                          </button>
-                        </div>
-                        <div className="text-[10px] font-mono max-h-36 overflow-y-auto leading-normal whitespace-pre-wrap select-all bg-white border border-slate-200 p-2 rounded">
-                          {selectedCase.appealDraft}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="mt-6">
-                      <TimeLeapSimulator caseId={selectedCase._id} onUpdate={handleTimeLeapUpdate} />
-                    </div>
-
-                  </div>
-
-                  {/* Right Column: ASSIST MODE Checklist Guidance steps (3/5 size) */}
-                  <div className="lg:col-span-3 space-y-4 pl-0 lg:pl-4">
-                    
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                      <h4 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider">
-                        Assist Mode Filing checklist
-                      </h4>
-                      <span className="text-[9px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-500 font-bold uppercase">
-                        📋 Guide Only
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 leading-normal leading-relaxed">
-                      Please copy these pre-filled details to input them on the official CPGRAMS/RTI portals.
-                    </p>
-
-                    <div className="space-y-3">
-                      
-                      {/* Step 1 */}
-                      <div className="bg-slate-50 border border-slate-200 rounded p-3 flex justify-between items-center gap-3">
-                        <div className="space-y-1">
-                          <span className="block text-[9px] font-extrabold text-blue-900 uppercase">Step 1: Applicant Name</span>
-                          <span className="text-xs font-bold text-slate-800">{user?.fullName || 'Adhikar Citizen'}</span>
-                        </div>
-                        <button
-                          onClick={() => handleCopyText(user?.fullName || 'Adhikar Citizen', 'name')}
-                          className="px-2 py-1 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700 hover:bg-slate-50"
-                        >
-                          {copiedDraft === 'name' ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-
-                      {/* Step 2 */}
-                      <div className="bg-slate-50 border border-slate-200 rounded p-3 flex justify-between items-center gap-3">
-                        <div className="space-y-1">
-                          <span className="block text-[9px] font-extrabold text-blue-900 uppercase">Step 2: Concerned Ministry</span>
-                          <span className="text-xs font-bold text-slate-800 truncate max-w-64 block">{selectedCase.department}</span>
-                        </div>
-                        <button
-                          onClick={() => handleCopyText(selectedCase.department, 'dept')}
-                          className="px-2 py-1 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700 hover:bg-slate-50"
-                        >
-                          {copiedDraft === 'dept' ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-
-                      {/* Step 3 */}
-                      <div className="bg-slate-50 border border-slate-200 rounded p-3 flex justify-between items-center gap-3">
-                        <div className="space-y-1 w-full">
-                          <span className="block text-[9px] font-extrabold text-blue-900 uppercase">Step 3: Grievance Description</span>
-                          <span className="text-[10px] font-mono text-slate-500 truncate block pr-6">{selectedCase.formalLetter}</span>
-                        </div>
-                        <button
-                          onClick={() => handleCopyText(selectedCase.formalLetter, 'desc')}
-                          className="px-2 py-1 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700 hover:bg-slate-50 shrink-0"
-                        >
-                          {copiedDraft === 'desc' ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-
-                      {/* Step 4 */}
-                      <div className="bg-slate-50 border border-slate-200 rounded p-3 flex justify-between items-center gap-3">
-                        <div className="space-y-1">
-                          <span className="block text-[9px] font-extrabold text-blue-900 uppercase">Step 4: State / District</span>
-                          <span className="text-xs font-bold text-slate-800">{selectedCase.district}, {selectedCase.state}</span>
-                        </div>
-                        <button
-                          onClick={() => handleCopyText(`${selectedCase.district}, ${selectedCase.state}`, 'loc')}
-                          className="px-2 py-1 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700 hover:bg-slate-50"
-                        >
-                          {copiedDraft === 'loc' ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-
-                      {/* Demo Action: Mark as Submitted manually */}
-                      <div className="border-t border-slate-250 pt-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
-                        <div className="text-[10px] text-slate-500 italic max-w-xs leading-tight">
-                          Once you copy and input these details on the real PG Portal, paste your returned registration ID here to track it.
-                        </div>
-                        
-                        <div className="flex gap-2 w-full sm:w-auto shrink-0">
-                          <button
-                            onClick={() => {
-                              const ref = prompt('Enter the official registration ID returned by CPGRAMS / RTI portal:');
-                              if (ref) {
-                                handleTimeLeap(selectedCase._id, 'today'); // reset date
-                                alert('Case successfully tracked in system. Reference ID stored.');
-                              }
-                            }}
-                            className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded text-xs uppercase tracking-wide"
-                          >
-                            Mark As Filed
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                </div>
+                )}
 
               </div>
 
-            </div>
-          )}
-
-          {/* PANEL 5: SETTINGS */}
-          {activePanel === 'settings' && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              
-              <div className="bg-white border border-slate-250 rounded shadow-sm">
-                <div className="bg-slate-50 px-5 py-4 border-b border-slate-200">
-                  <h3 className="font-extrabold text-sm text-blue-950 uppercase tracking-wider">
-                    Citizen Profile Details
-                  </h3>
-                </div>
-
-                <div className="p-6 space-y-6 font-sans text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">First Name</span>
-                      <div className="bg-slate-50 p-2.5 border border-slate-200 rounded font-semibold text-slate-800">{user?.firstName || 'Not provided'}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Last Name</span>
-                      <div className="bg-slate-50 p-2.5 border border-slate-200 rounded font-semibold text-slate-800">{user?.lastName || 'Not provided'}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Verified Mobile</span>
-                      <div className="bg-slate-50 p-2.5 border border-slate-200 rounded font-semibold text-slate-800 font-mono">{user?.phone || 'Not provided'}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Gender</span>
-                      <div className="bg-slate-50 p-2.5 border border-slate-200 rounded font-semibold text-slate-800">{user?.gender || 'Not provided'}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Date of Birth</span>
-                      <div className="bg-slate-50 p-2.5 border border-slate-200 rounded font-semibold text-slate-800">
-                        {user?.dob ? new Date(user.dob).toLocaleDateString('en-IN') : 'Not provided'}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Registered Address</span>
-                      <div className="bg-slate-50 p-2.5 border border-slate-200 rounded font-semibold text-slate-800">
-                        {user?.district}, {user?.state}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Modal Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button 
+                  onClick={() => setSelectedCase(null)}
+                  className="px-6 py-2 bg-slate-800 text-white font-bold text-xs rounded-lg hover:bg-slate-900"
+                >
+                  Close Record
+                </button>
               </div>
-
-            </div>
-          )}
-
-        </main>
-      </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

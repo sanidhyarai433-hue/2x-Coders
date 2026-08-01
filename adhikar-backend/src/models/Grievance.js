@@ -66,11 +66,33 @@ const GrievanceSchema = new mongoose.Schema({
   },
   appealDraft: {
     type: String,
-    required: true,
+    default: '',
   },
   appeal2Draft: {
     type: String,
-    required: true,
+    default: '',
+  },
+  appeal_level: {
+    type: Number,
+    default: 0,
+  },
+  appeal1_date: {
+    type: Date,
+  },
+  appeal2_date: {
+    type: Date,
+  },
+  appeal1_letter: {
+    type: String,
+    default: '',
+  },
+  appeal2_letter: {
+    type: String,
+    default: '',
+  },
+  escalation_status: {
+    type: String,
+    default: 'None',
   },
   deadlineDays: {
     type: Number,
