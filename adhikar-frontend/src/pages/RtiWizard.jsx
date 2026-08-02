@@ -174,7 +174,7 @@ Signature of Applicant`;
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-slate-950 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 disabled:opacity-50 transition-all duration-300"
+            className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-slate-950 bg-linear-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 disabled:opacity-50 transition-all duration-300"
           >
             {submitting ? 'Structuring RTI Questions...' : 'Draft RTI Application'}
           </button>

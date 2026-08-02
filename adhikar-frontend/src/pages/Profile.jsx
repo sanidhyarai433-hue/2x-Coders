@@ -143,7 +143,7 @@ const Profile = () => {
         <div className="glass rounded-3xl border border-slate-800/80 p-6 md:p-8 shadow-2xl relative overflow-hidden">
           
           {/* Tri-color Top border highlight */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-saffron-500 via-white to-ashoka-500"></div>
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-linear-to-r from-saffron-500 via-white to-ashoka-500"></div>
 
           {/* FEEDBACK BANNERS */}
           {error && (

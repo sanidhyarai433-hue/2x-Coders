@@ -19,11 +19,11 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="bg-gradient-to-tr from-saffron-500 to-amber-600 p-2.5 rounded-xl shadow-lg shadow-saffron-500/20 group-hover:scale-105 transition-transform duration-300">
+          <div className="bg-linear-to-tr from-saffron-500 to-amber-600 p-2.5 rounded-xl shadow-lg shadow-saffron-500/20 group-hover:scale-105 transition-transform duration-300">
             <Scale className="w-6 h-6 text-slate-950 stroke-[2]" />
           </div>
           <div>
-            <span className="font-extrabold text-xl tracking-wider bg-gradient-to-r from-saffron-500 via-slate-100 to-ashoka-500 bg-clip-text text-transparent">
+            <span className="font-extrabold text-xl tracking-wider bg-linear-to-r from-saffron-500 via-slate-100 to-ashoka-500 bg-clip-text text-transparent">
               ADHIKAR
             </span>
             <div className="text-[10px] text-slate-400 font-mono tracking-widest leading-none">AI CITIZEN Copilot</div>

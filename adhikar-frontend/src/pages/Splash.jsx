@@ -34,9 +34,9 @@ const Splash = () => {
         className={`text-center space-y-6 max-w-md px-6 animate-page-enter`}
       >
         {/* Emblem/Logo container */}
-        <div className="mx-auto flex items-center justify-center bg-gradient-to-br from-blue-900 to-indigo-950 p-4.5 w-24 h-24 rounded-3xl shadow-2xl mb-4 border border-slate-800/80 relative">
+        <div className="mx-auto flex items-center justify-center bg-linear-to-br from-blue-900 to-indigo-950 p-4.5 w-24 h-24 rounded-3xl shadow-2xl mb-4 border border-slate-800/80 relative">
           {/* Tri-color glow ring */}
-          <div className="absolute -inset-0.5 bg-gradient-to-tr from-saffron-500 via-white to-ashoka-500 rounded-3xl opacity-20 blur-sm"></div>
+          <div className="absolute -inset-0.5 bg-linear-to-tr from-saffron-500 via-white to-ashoka-500 rounded-3xl opacity-20 blur-sm"></div>
           <img 
             src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" 
             className="w-14 h-14 object-contain opacity-95 relative z-10" 
@@ -46,7 +46,7 @@ const Splash = () => {
 
         {/* Text Details */}
         <div className="space-y-2">
-          <h1 className="text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-saffron-500 via-white to-ashoka-500 leading-none">
+          <h1 className="text-4xl font-black tracking-widest text-transparent bg-clip-text bg-linear-to-r from-saffron-500 via-white to-ashoka-500 leading-none">
             ADHIKAR
           </h1>
           <p className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
@@ -54,7 +54,7 @@ const Splash = () => {
           </p>
         </div>
 
-        <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-slate-700 to-transparent mx-auto my-4"></div>
+        <div className="h-[1px] w-24 bg-linear-to-r from-transparent via-slate-700 to-transparent mx-auto my-4"></div>
 
         <p className="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">
           AI-Powered Citizen Grievance & RTI Assistant Portal
@@ -63,7 +63,7 @@ const Splash = () => {
         {/* Premium subtle loading indicator */}
         <div className="pt-6 flex flex-col items-center gap-2">
           <div className="w-12 h-[3px] bg-slate-900 rounded-full overflow-hidden relative">
-            <div className="absolute top-0 bottom-0 left-0 w-6 bg-gradient-to-r from-saffron-500 to-ashoka-500 rounded-full animate-[loading_1.5s_infinite_ease-in-out]"></div>
+            <div className="absolute top-0 bottom-0 left-0 w-6 bg-linear-to-r from-saffron-500 to-ashoka-500 rounded-full animate-[loading_1.5s_infinite_ease-in-out]"></div>
           </div>
           <span className="text-[9px] font-mono text-slate-500 tracking-wider uppercase animate-pulse">
             Establishing secure registry connection...

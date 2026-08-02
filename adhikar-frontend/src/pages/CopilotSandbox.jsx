@@ -480,7 +480,7 @@ const CopilotSandbox = () => {
                   </div>
                   <div className="w-full h-1.5 bg-slate-850 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-saffron-500 to-amber-500 rounded-full transition-all duration-75"
+                      className="h-full bg-linear-to-r from-saffron-500 to-amber-500 rounded-full transition-all duration-75"
                       style={{ width: `${scanProgress}%` }}
                     ></div>
                   </div>
@@ -489,7 +489,7 @@ const CopilotSandbox = () => {
                 <button
                   onClick={() => runAiScan(complaintText)}
                   disabled={!complaintText || complaintText.trim().length < 10}
-                  className="w-full py-3.5 px-4 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase rounded-xl transition-all shadow-xl shadow-saffron-500/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                  className="w-full py-3.5 px-4 bg-linear-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase rounded-xl transition-all shadow-xl shadow-saffron-500/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                 >
                   Engage AI Classifier
                   <ArrowRight className="w-4 h-4 stroke-[3]" />
@@ -631,7 +631,7 @@ const CopilotSandbox = () => {
           {activeStep > 0 && activeStep < 4 && (
             <button
               onClick={handleContinueProcedure}
-              className="w-full py-4 px-4 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-extrabold text-xs uppercase rounded-xl tracking-wider transition-all duration-300 shadow-xl shadow-saffron-500/20 hover:shadow-saffron-500/35 hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-4 px-4 bg-linear-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-extrabold text-xs uppercase rounded-xl tracking-wider transition-all duration-300 shadow-xl shadow-saffron-500/20 hover:shadow-saffron-500/35 hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
             >
               Continue with this procedure
               <ChevronRight className="w-4 h-4 stroke-[3]" />

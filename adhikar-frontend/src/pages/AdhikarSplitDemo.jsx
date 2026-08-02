@@ -50,7 +50,7 @@ const AdhikarSplitDemo = () => {
         {/* Header */}
         <div className="px-8 pt-8 pb-6 shrink-0">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -402,7 +402,7 @@ const AdhikarSplitDemo = () => {
           {/* CPGRAMS Footer */}
           <div className="bg-[#0f284b] text-white px-8 py-4 shrink-0 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-xl font-bold bg-gradient-to-r from-orange-400 via-white to-green-400 bg-clip-text text-transparent">Digital India</div>
+              <div className="text-xl font-bold bg-linear-to-r from-orange-400 via-white to-green-400 bg-clip-text text-transparent">Digital India</div>
               <p className="text-[9px] text-slate-400 italic">Power to Empower</p>
             </div>
             <div className="text-[10px] text-slate-300 flex flex-col items-center">

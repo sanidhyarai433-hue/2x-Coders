@@ -439,10 +439,10 @@ const Login = () => {
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-ashoka-500/5 rounded-full blur-[120px] pointer-events-none select-none"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-5xl text-center mb-8 select-none relative z-10">
-        <div className="mx-auto flex items-center justify-center bg-gradient-to-br from-blue-900 to-indigo-950 p-3.5 w-16 h-16 rounded-2xl shadow-2xl mb-4 border border-slate-800">
+        <div className="mx-auto flex items-center justify-center bg-linear-to-br from-blue-900 to-indigo-950 p-3.5 w-16 h-16 rounded-2xl shadow-2xl mb-4 border border-slate-800">
           <Scale className="w-9 h-9 text-saffron-500 stroke-[1.8] animate-pulse" />
         </div>
-        <h1 className="text-3xl font-black bg-gradient-to-r from-saffron-500 via-slate-100 to-ashoka-500 bg-clip-text text-transparent tracking-wider uppercase leading-none">
+        <h1 className="text-3xl font-black bg-linear-to-r from-saffron-500 via-slate-100 to-ashoka-500 bg-clip-text text-transparent tracking-wider uppercase leading-none">
           ADHIKAR CITIZEN REGISTRY
         </h1>
         <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest flex items-center justify-center gap-1.5">
@@ -454,7 +454,7 @@ const Login = () => {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6 items-start relative z-10">
         <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden transition-all duration-300">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-saffron-500 via-white to-ashoka-500"></div>
+          <div className="absolute top-0 left-0 right-0 h-0.75 bg-linear-to-r from-saffron-500 via-white to-ashoka-500"></div>
 
           <div className="flex items-center justify-between border-b border-slate-800/60 pb-4 mb-6 select-none">
             <div>
@@ -523,7 +523,7 @@ const Login = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-xl bg-gradient-to-r from-saffron-500 to-amber-500 text-slate-950 font-black text-xs uppercase hover:from-saffron-600 hover:to-amber-600 shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-xl bg-linear-to-r from-saffron-500 to-amber-500 text-slate-950 font-black text-xs uppercase hover:from-saffron-600 hover:to-amber-600 shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Request Verification Code"}
                       <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -532,7 +532,7 @@ const Login = () => {
                 ) : (
                   <form onSubmit={handleOtpVerify} className="space-y-6">
                     <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-2 select-none relative overflow-hidden">
-                      <div className="absolute top-0 left-0 bottom-0 w-[4px] bg-saffron-500"></div>
+                      <div className="absolute top-0 left-0 bottom-0 w-1 bg-saffron-500"></div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${isAutoDetecting ? 'bg-saffron-500 animate-ping' : 'bg-ashoka-500'}`}></div>
@@ -546,7 +546,7 @@ const Login = () => {
                       </div>
                       {isAutoDetecting ? (
                         <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-saffron-500 to-amber-500 h-full w-1/2 animate-shimmer"></div>
+                          <div className="bg-linear-to-r from-saffron-500 to-amber-500 h-full w-1/2 animate-shimmer"></div>
                         </div>
                       ) : (
                         <p className="text-[10px] text-slate-400 leading-relaxed">
@@ -599,7 +599,7 @@ const Login = () => {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 py-3.5 px-4 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase rounded-xl transition-all shadow-xl shadow-saffron-500/10 flex items-center justify-center gap-2"
+                        className="flex-1 py-3.5 px-4 bg-linear-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase rounded-xl transition-all shadow-xl shadow-saffron-500/10 flex items-center justify-center gap-2"
                       >
                         {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Verify Code"}
                         <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -634,7 +634,7 @@ const Login = () => {
                       </label>
                       <div className="relative rounded-xl border border-slate-850 bg-slate-900/60 select-none">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                          <Lock className="h-3.5 h-3.5" />
+                          <Lock className="h-3.5" />
                         </div>
                         <input
                           type="text"
@@ -911,7 +911,7 @@ const Login = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 py-3 px-4 bg-gradient-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase rounded-xl transition-all shadow-xl shadow-saffron-500/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="flex-1 py-3 px-4 bg-linear-to-r from-saffron-500 to-amber-500 hover:from-saffron-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase rounded-xl transition-all shadow-xl shadow-saffron-500/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Complete Onboarding"}
                     <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -931,7 +931,7 @@ const Login = () => {
             </h3>
           </div>
 
-          <div className="space-y-3.5 max-h-[460px] overflow-y-auto pr-1">
+          <div className="space-y-3.5 max-h-115 overflow-y-auto pr-1">
             {aiHints.map((hint, idx) => (
               <div 
                 key={idx}

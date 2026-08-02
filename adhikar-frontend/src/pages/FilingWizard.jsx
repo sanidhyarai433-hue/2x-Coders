@@ -288,12 +288,12 @@ const FilingWizard = () => {
     <div className="min-h-screen flex font-sans overflow-hidden bg-[#0a0f1c]">
       
       {/* LEFT SIDEBAR PANEL (35% Width) */}
-      <div className="w-[35%] shrink-0 bg-[#0f172a] border-r border-slate-800 flex flex-col justify-between relative overflow-y-auto">
+      <div className="w-[35%] shrink-0 bg-navy-900 border-r border-slate-800 flex flex-col justify-between relative overflow-y-auto">
         
         <div className="p-8">
           {/* Header & Logo */}
           <div className="flex items-center gap-3 mb-8 cursor-pointer" onClick={() => navigate('/dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -381,7 +381,7 @@ const FilingWizard = () => {
             }}
           />
 
-          <div className="p-4 bg-[#0f172a] border border-emerald-500/20 rounded-xl overflow-hidden">
+          <div className="p-4 bg-navy-900 border border-emerald-500/20 rounded-xl overflow-hidden">
             <div className="flex gap-3">
               <div className="mt-0.5 text-emerald-400 shrink-0">
                 <Lightbulb className="w-5 h-5 animate-pulse" />
@@ -905,7 +905,7 @@ const FilingWizard = () => {
           {/* Official Government Footer */}
           <div className="bg-[#0f284b] text-white px-8 py-3 shrink-0 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-base font-bold bg-gradient-to-r from-orange-400 via-white to-green-400 bg-clip-text text-transparent">Digital India</div>
+              <div className="text-base font-bold bg-linear-to-r from-orange-400 via-white to-green-400 bg-clip-text text-transparent">Digital India</div>
               <p className="text-[9px] text-slate-400 italic">Power to Empower</p>
             </div>
             <div className="text-[10px] text-slate-300 flex flex-col items-center">

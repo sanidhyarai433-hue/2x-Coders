@@ -296,7 +296,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex bg-[#f8f9fc] font-sans antialiased text-slate-800">
       
       {/* LEFT SIDEBAR */}
-      <div className="w-[280px] shrink-0 bg-gradient-to-b from-[#110c2e] to-[#201547] flex flex-col relative overflow-hidden z-20 shadow-2xl">
+      <div className="w-70 shrink-0 bg-linear-to-b from-[#110c2e] to-[#201547] flex flex-col relative overflow-hidden z-20 shadow-2xl">
         
         {/* Top Flag Graphic overlay */}
         <div className="absolute top-0 left-0 w-full h-32 opacity-90 pointer-events-none">
@@ -316,7 +316,7 @@ const Dashboard = () => {
           <h3 className="text-[11px] font-bold text-slate-400 tracking-widest mb-4">CITIZEN SERVICES</h3>
           
           <div className="space-y-2">
-            <button className="w-full flex items-center gap-3 px-4 py-3.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-xl text-white font-semibold shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30 transition-transform hover:scale-[1.02]">
+            <button className="w-full flex items-center gap-3 px-4 py-3.5 bg-linear-to-r from-purple-600 to-fuchsia-600 rounded-xl text-white font-semibold shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30 transition-transform hover:scale-[1.02]">
               <FolderOpen className="w-5 h-5" />
               <span>My Cases</span>
             </button>
@@ -384,7 +384,7 @@ const Dashboard = () => {
               <p className="text-xs font-semibold text-slate-500">AI Grievance & RTI Capitol Portal</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <div className="flex w-3 h-2 flex-col">
-                  <div className="bg-[#FF9933] h-full w-full"></div>
+                  <div className="bg-saffron-500 h-full w-full"></div>
                   <div className="bg-white h-full w-full"></div>
                   <div className="bg-[#138808] h-full w-full"></div>
                 </div>
@@ -395,7 +395,7 @@ const Dashboard = () => {
 
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
                 R
               </div>
               <div className="hidden md:block">
@@ -418,7 +418,7 @@ const Dashboard = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={logout}
-              className="ml-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-sm rounded-full shadow-[0_4px_15px_rgba(249,115,22,0.3)]"
+              className="ml-2 px-6 py-2.5 bg-linear-to-r from-orange-500 to-pink-500 text-white font-bold text-sm rounded-full shadow-[0_4px_15px_rgba(249,115,22,0.3)]"
             >
               LOG OUT
             </motion.button>
@@ -435,7 +435,7 @@ const Dashboard = () => {
           >
             
             {/* Hero Section */}
-            <motion.div variants={itemVariants} className="bg-gradient-to-r from-purple-900 via-indigo-900 to-[#110c2e] rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden group border border-white/10">
+            <motion.div variants={itemVariants} className="bg-linear-to-r from-purple-900 via-indigo-900 to-[#110c2e] rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden group border border-white/10">
               <div className="relative z-10">
                 <h2 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-white drop-shadow-sm">
                   Welcome back, {user?.firstName || 'Rajesh'} <motion.span 
@@ -456,7 +456,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* Card 1 */}
-              <motion.div variants={itemVariants} className="bg-gradient-to-br from-emerald-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <motion.div variants={itemVariants} className="bg-linear-to-br from-emerald-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <div className="flex flex-col relative z-10 h-full">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">TOTAL DOCKETS</h3>
                   <div className="text-4xl font-extrabold text-emerald-500 mb-1 tracking-tight">
@@ -475,7 +475,7 @@ const Dashboard = () => {
               </motion.div>
 
               {/* Card 2 */}
-              <motion.div variants={itemVariants} className="bg-gradient-to-br from-orange-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-orange-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <motion.div variants={itemVariants} className="bg-linear-to-br from-orange-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-orange-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <div className="flex flex-col relative z-10 h-full">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">ACTIVE PENDING</h3>
                   <div className="text-4xl font-extrabold text-orange-500 mb-1 tracking-tight">
@@ -494,7 +494,7 @@ const Dashboard = () => {
               </motion.div>
 
               {/* Card 3 */}
-              <motion.div variants={itemVariants} className="bg-gradient-to-br from-rose-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-rose-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <motion.div variants={itemVariants} className="bg-linear-to-br from-rose-50/50 to-white rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-rose-100/50 relative overflow-hidden group hover:scale-[1.03] hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <div className="flex flex-col relative z-10 h-full">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">APPEALS / OVERDUE</h3>
                   <div className="text-4xl font-extrabold text-rose-500 mb-1 tracking-tight">
@@ -593,7 +593,7 @@ const Dashboard = () => {
                               </div>
                               <div>
                                 <span className="text-sm font-bold text-slate-800 block leading-tight">{g.category || 'General'}</span>
-                                <span className="text-[11px] text-slate-500 block truncate max-w-[200px]">{g.department}</span>
+                                <span className="text-[11px] text-slate-500 block truncate max-w-50">{g.department}</span>
                               </div>
                             </div>
                           </td>
@@ -644,7 +644,7 @@ const Dashboard = () => {
             </motion.div>
 
             {/* Banner Section */}
-            <motion.div variants={itemVariants} className="rounded-2xl overflow-hidden relative shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-gradient-to-r from-purple-100 via-pink-50 to-emerald-50 border border-white">
+            <motion.div variants={itemVariants} className="rounded-2xl overflow-hidden relative shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-linear-to-r from-purple-100 via-pink-50 to-emerald-50 border border-white">
               <div className="relative z-10 p-8 md:p-10 md:w-1/2">
                 <div className="w-14 h-14 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/30 mb-5">
                   <Shield className="w-7 h-7 text-white" />
@@ -654,9 +654,9 @@ const Dashboard = () => {
               </div>
               
               <div className="absolute right-0 bottom-0 w-1/2 h-full hidden md:block opacity-90 mix-blend-multiply">
-                <div className="w-full h-full bg-no-repeat bg-right-bottom bg-contain" style={{backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Parliament_House_of_India_New_Delhi.jpg/800px-Parliament_House_of_India_New_Delhi.jpg')"}}></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-50 to-transparent"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-emerald-50/50 to-transparent"></div>
+                <div className="w-full h-full bg-no-repeat bg-bottom-right bg-contain" style={{backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Parliament_House_of_India_New_Delhi.jpg/800px-Parliament_House_of_India_New_Delhi.jpg')"}}></div>
+                <div className="absolute inset-0 bg-linear-to-r from-pink-50 to-transparent"></div>
+                <div className="absolute inset-0 bg-linear-to-t from-emerald-50/50 to-transparent"></div>
               </div>
             </motion.div>
 
@@ -769,7 +769,7 @@ const Dashboard = () => {
               className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="p-6 bg-gradient-to-r from-purple-900 to-indigo-900 text-white flex justify-between items-center">
+              <div className="p-6 bg-linear-to-r from-purple-900 to-indigo-900 text-white flex justify-between items-center">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[11px] font-bold text-purple-300 uppercase tracking-widest block">CASE RECORD DETAILS</span>

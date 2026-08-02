@@ -99,7 +99,7 @@ const FutureScopeDemo = () => {
                     onClick={() => setActiveStep(step.id)}
                     className={`w-full text-left transition-all duration-300 rounded-xl p-4 border relative ${
                       isActive 
-                        ? 'bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border-blue-500/50 shadow-lg shadow-blue-900/20 scale-100' 
+                        ? 'bg-linear-to-br from-blue-900/40 to-indigo-900/40 border-blue-500/50 shadow-lg shadow-blue-900/20 scale-100' 
                         : isPast
                           ? 'bg-slate-900 border-slate-800 opacity-60 scale-95'
                           : 'bg-slate-900/50 border-transparent hover:bg-slate-800 scale-95'
@@ -132,7 +132,7 @@ const FutureScopeDemo = () => {
           <div className="p-6 bg-slate-900 border-t border-slate-800 shrink-0">
             <button 
               onClick={() => setActiveStep(prev => Math.min(prev + 1, steps.length))}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+              className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
             >
               Continue with this procedure <ChevronRight className="w-5 h-5" />
             </button>
@@ -179,7 +179,7 @@ const FutureScopeDemo = () => {
                 <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto animate-fade-in text-slate-800 relative w-full">
                   
                   {/* Fake Government UI Header inside the fallback */}
-                  <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-amber-600 to-amber-700 flex items-center px-6 shadow-md z-10">
+                  <div className="absolute top-0 left-0 right-0 h-16 bg-linear-to-r from-amber-600 to-amber-700 flex items-center px-6 shadow-md z-10">
                     <div className="w-10 h-10 bg-white/20 rounded-full mr-4"></div>
                     <div>
                       <h2 className="text-white font-bold text-sm">{currentStepData.title}</h2>
